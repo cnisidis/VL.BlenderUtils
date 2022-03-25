@@ -1362,7 +1362,7 @@
           <Choice Kind="OperationDefinition" Name="Operation" />
         </p:NodeReference>
         <Patch Id="SalVsa0FDDvOBAX2lxM6GU">
-          <Pad Id="RjoYn0mY5GNL7wtn31keQl" Comment="Path" Bounds="42,1009,35,15" ShowValueBox="true" isIOBox="true" Value="//VTarget">
+          <Pad Id="RjoYn0mY5GNL7wtn31keQl" Comment="Path" Bounds="42,1009,164,25" ShowValueBox="true" isIOBox="true" Value="//BLPOINT">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastSymbolSource="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
