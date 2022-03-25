@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" Id="IlbBhE1t8VgNpqbzXPC2gv" LanguageVersion="2021.4.8.931" Version="0.128">
+  <Patch Id="K0AgtIo2UgiPqFyW45ewUv">
+    <Canvas Id="OhWy6A5tuQFMSTdkeSlEco" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="L8IzrdqPr9QMxZWFsWVGwJ">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <FullNameCategoryReference ID="Primitive" />
+      </p:NodeReference>
+      <Patch Id="OOTBe3Xce6PLQDPhPDKmSR">
+        <Canvas Id="P6iEDanviRjPp3GqX8eGrT" CanvasType="Group">
+          <Node Bounds="593,340" Id="BrAPDHGWpS6MRyfbHNV359">
+            <p:NodeReference LastCategoryFullName="VL.BlenderUtils" LastSymbolSource="VL.BlenderUtils.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="ParseBlenderPoints" />
+            </p:NodeReference>
+            <Pin Id="INKLyBNVrnkOsuVILmFjC4" Name="Update" Kind="InputPin" />
+            <Pin Id="NJ1qecLNl3TLnIMwEIRNYH" Name="XML" Kind="InputPin" />
+            <Pin Id="QOfavw3wY6xL2gvegFWe8W" Name="Scalar" Kind="InputPin" />
+            <Pin Id="VNnd6gljyaDOdyhLH95Ewn" Name="BlenderPoints" Kind="OutputPin" />
+            <Pin Id="IMYr1zQYIbCNOLsKAYdvE6" Name="co" Kind="OutputPin" />
+          </Node>
+          <Pad Id="PTgdFjZxWz0QUl3vkMw5JG" Comment="XML" Bounds="643,284,35,15" ShowValueBox="true" isIOBox="true" Value="&lt;BLPOINTS&gt;&lt;BLPOINT name=&quot;Cube.001&quot;&gt;&lt;vertex id=&quot;0&quot;&gt;-1.9181123971939087,-0.2960350513458252,0.47005462646484375&lt;/vertex&gt;&lt;vertex id=&quot;1&quot;&gt;-1.9181123971939087,1.7039649486541748,0.47005462646484375&lt;/vertex&gt;&lt;vertex id=&quot;2&quot;&gt;-1.9181123971939087,-0.2960350513458252,-1.5299453735351562&lt;/vertex&gt;&lt;vertex id=&quot;3&quot;&gt;-1.9181123971939087,1.7039649486541748,-1.5299453735351562&lt;/vertex&gt;&lt;vertex id=&quot;4&quot;&gt;0.08188760280609131,-0.2960350513458252,0.47005462646484375&lt;/vertex&gt;&lt;vertex id=&quot;5&quot;&gt;0.08188760280609131,1.7039649486541748,0.47005462646484375&lt;/vertex&gt;&lt;vertex id=&quot;6&quot;&gt;0.08188760280609131,-0.2960350513458252,-1.5299453735351562&lt;/vertex&gt;&lt;vertex id=&quot;7&quot;&gt;0.08188760280609131,1.7039649486541748,-1.5299453735351562&lt;/vertex&gt;&lt;vertex id=&quot;8&quot;&gt;-1.9181123971939087,-0.2960350513458252,2.1197891235351562&lt;/vertex&gt;&lt;vertex id=&quot;9&quot;&gt;-1.9181123971939087,1.7039649486541748,2.1197891235351562&lt;/vertex&gt;&lt;vertex id=&quot;10&quot;&gt;0.08188760280609131,1.7039649486541748,2.1197891235351562&lt;/vertex&gt;&lt;vertex id=&quot;11&quot;&gt;0.08188760280609131,-0.2960350513458252,2.1197891235351562&lt;/vertex&gt;&lt;vertex id=&quot;12&quot;&gt;3.6724495887756348,1.7039649486541748,-1.5299453735351562&lt;/vertex&gt;&lt;vertex id=&quot;13&quot;&gt;3.6724495887756348,-0.2960350513458252,-1.5299453735351562&lt;/vertex&gt;&lt;vertex id=&quot;14&quot;&gt;3.6724495887756348,-0.2960350513458252,0.47005462646484375&lt;/vertex&gt;&lt;vertex id=&quot;15&quot;&gt;3.6724495887756348,1.7039649486541748,0.47005462646484375&lt;/vertex&gt;&lt;vertex id=&quot;16&quot;&gt;-1.1755287647247314,-2.81585955619812,-0.7873611450195312&lt;/vertex&gt;&lt;vertex id=&quot;17&quot;&gt;-1.1755287647247314,-2.81585955619812,-0.27252960205078125&lt;/vertex&gt;&lt;vertex id=&quot;18&quot;&gt;-0.6606960296630859,-2.81585955619812,-0.7873611450195312&lt;/vertex&gt;&lt;vertex id=&quot;19&quot;&gt;-0.6606960296630859,-2.81585955619812,-0.27252960205078125&lt;/vertex&gt;&lt;/BLPOINT&gt;&lt;/BLPOINTS&gt;">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastSymbolSource="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="GdAbbhMiLy1LV4Im7wzkh8" Comment="co" Bounds="703,446,122,174" ShowValueBox="true" isIOBox="true">
+            <p:Value>
+              <Item>0, 0, 0</Item>
+            </p:Value>
+          </Pad>
+          <Pad Id="MJ24YHTrAJiMwkp5iuGzAS" Comment="Update" Bounds="595,229,35,35" ShowValueBox="true" isIOBox="true" Value="False">
+            <p:TypeAnnotation>
+              <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
+              <FullNameCategoryReference ID="Primitive" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Bang</p:buttonmode>
+            </p:ValueBoxSettings>
+          </Pad>
+        </Canvas>
+        <Patch Id="KtKuonwtghTNtxoYAbq7QK" Name="Create" />
+        <Patch Id="VtZkbJtZ3PmOFI0J7oWcKY" Name="Update" />
+        <ProcessDefinition Id="BAnRN5lbd0jQGEs6RYA9od">
+          <Fragment Id="Qua8e5sIV2GMhZR7sWElzv" Patch="KtKuonwtghTNtxoYAbq7QK" Enabled="true" />
+          <Fragment Id="HA0v7rWzzwsNhg5y8E27lO" Patch="VtZkbJtZ3PmOFI0J7oWcKY" Enabled="true" />
+        </ProcessDefinition>
+        <Link Id="ObMDmZmezqCNRghktW6Izu" Ids="PTgdFjZxWz0QUl3vkMw5JG,NJ1qecLNl3TLnIMwEIRNYH" />
+        <Link Id="J08LgNp9TnEN77DzVAZtg3" Ids="IMYr1zQYIbCNOLsKAYdvE6,GdAbbhMiLy1LV4Im7wzkh8" />
+        <Link Id="NS1lmKXcuNaLG90TFix7Mp" Ids="MJ24YHTrAJiMwkp5iuGzAS,INKLyBNVrnkOsuVILmFjC4" />
+      </Patch>
+    </Node>
+  </Patch>
+  <NugetDependency Id="RnjZSEFpjVcNo8rL0k1Nxi" Location="VL.CoreLib" Version="2021.4.8-0931-g30683594d1" />
+  <NugetDependency Id="N0APT4YO4t1MBroQRTlZ9t" Location="VL.BlenderUtils" Version="0.0.0.0" />
+</Document>
