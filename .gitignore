@@ -3,3 +3,6 @@
 /src/obj
 /src/lib
 /*/*.blend1
+/csharp/VL.BlenderUtils.IO/.vs
+/csharp/VL.BlenderUtils.IO/obj
+/csharp/VL.BlenderUtils.IO/bin
