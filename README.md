@@ -23,3 +23,16 @@ VL
 2. add VL.BlenderUtils as a dependency into your VL patch
 3. Introduce a BlenderCameraParser
 4. Create a String IOBox and paste the XML content
+
+
+[Blender Block - Kaitai.io](/imgs/kaitai_blender_blend.svg)<img src="imgs/kaitai_blender_blend.svg">
+
+# References
+
+[The Mystery of the Blend](https://github.com/fschutt/mystery-of-the-blend-backup)
+
+[Blender DNA: Unraveling the Internal Structure](https://harlepengren.com/blender-dna-unraveling-the-internal-structure/)
+
+[Mystery of the Blend](https://projects.blender.org/blender/blender/src/branch/main/doc/blender_file_format/mystery_of_the_blend.html)
+
+[Kaitai Blend File Structure](https://formats.kaitai.io/blender_blend/csharp.html)
