@@ -408,7 +408,7 @@ namespace VL.BlenderUtils.Parser
 
         }
 
-       
+
         public static DNAStruct FromBytes(byte[] bytes)
         {
             var sdna = new DNAStruct()
@@ -468,7 +468,7 @@ namespace VL.BlenderUtils.Parser
 
         private void Read(BinaryReader reader)
         {
-            _idxName = reader.ReadUInt16();
+            _idxType = reader.ReadUInt16();
             _idxName = reader.ReadUInt16();
         }
 
