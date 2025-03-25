@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
@@ -403,6 +404,8 @@ namespace VL.BlenderUtils.Parser
         private ushort _numFields;
         private List<DNAField> _fields;
 
+        private int Size;
+
         public DNAStruct()
         {
 
@@ -434,7 +437,7 @@ namespace VL.BlenderUtils.Parser
             {
                 dnaStruct._fields.Add(new DNAField(reader, dnaStruct, root));
             }
-
+            
             return dnaStruct;
         }
 
@@ -446,6 +449,8 @@ namespace VL.BlenderUtils.Parser
         }
     }
 
+    //Read DNA stuct
+    //https://github.com/blender/blender/blob/main/source/blender/makesdna/intern/dna_genfile.cc#L130
     public partial class DNAField
     {
         private ushort _idxType;
@@ -458,8 +463,10 @@ namespace VL.BlenderUtils.Parser
 
         public DNAField(BinaryReader reader, DNAStruct sdna, BlendFileParser root)
         {
+            
             Parent = sdna;
             this.Read(reader);
+            
         }
 
         public void Type()
@@ -478,6 +485,8 @@ namespace VL.BlenderUtils.Parser
             IndexName = this._idxName;
             Parent = this.Parent;
         }
+
+        
 
     }
     
