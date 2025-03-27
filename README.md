@@ -38,6 +38,17 @@ I visited many sources I found online, best one so far was Kaitai site, they alr
 
 Nonetheless I reached a point where I can identify the different structures and blocks, next I have to mangle with "C" pointers and understand how to map SDNA structures to actual Datablocks.
 
+---------------
+### Notes
+
+Using IntPtr is already good enough to read bytes properly (according endianess)
+however this must change and be replaced by static functions in order to maintain the concept of working same files on 32 and 64 bit machines.
+
+(needs to create a table with types)
+
+**Quite important, DrawList seems to be deprecated or removed from the official repo although it is presented in the SDNA**
+
+----------------
 
 
 [Blender Block - Kaitai.io](/imgs/kaitai_blender_blend.svg)<img src="imgs/kaitai_blender_blend.svg">
@@ -54,3 +65,8 @@ Nonetheless I reached a point where I can identify the different structures and 
 
 
 [ID Datablocks - Official Documentation](https://developer.blender.org/docs/features/core/datablocks/id_type/)
+
+
+### Additional
+
+[Blender Headless - Arguments](https://docs.blender.org/manual/en/latest/advanced/command_line/arguments.html)
