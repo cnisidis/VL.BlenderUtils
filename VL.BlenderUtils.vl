@@ -2696,6 +2696,68 @@
           </ProcessDefinition>
         </Patch>
       </Node>
+      <Canvas Id="Q8yYg6iUcrtLoxOCMdfd1t" Name="DNA" Position="1472,190">
+        <!--
+
+    ************************ Scene ************************
+
+-->
+        <Node Name="Scene" Bounds="779,247" Id="OdA4VUYu34PPn4TkSF3gRA">
+          <p:NodeReference>
+            <Choice Kind="ForwardDefinition" Name="Forward" />
+            <CategoryReference Kind="Category" Name="Primitive" />
+          </p:NodeReference>
+          <p:TypeAnnotation LastCategoryFullName="VL.BlenderUtils.Parser.DNA" LastDependency="VL.BlenderUtils.csproj">
+            <Choice Kind="TypeFlag" Name="Scene" />
+            <FullNameCategoryReference ID="VL.BlenderUtils.Parser.DNA" />
+            <AssemblyReference ID="VL.BlenderUtils.csproj" />
+          </p:TypeAnnotation>
+          <Patch Id="LHEsALMPqDCPu1G6JW4wSo">
+            <Canvas Id="Rh4Ovq4q1DKLqY91cBdgI7" BordersChecked="false" CanvasType="Group" />
+            <ProcessDefinition Id="Ffxi0DTAbIhPeRamaYVH1T" IsHidden="true" />
+          </Patch>
+        </Node>
+        <!--
+
+    ************************ ID ************************
+
+-->
+        <Node Name="ID" Bounds="786,300" Id="NpFsLDE6aMnLFQOsRaYNAn">
+          <p:NodeReference>
+            <Choice Kind="ForwardDefinition" Name="Forward" />
+            <CategoryReference Kind="Category" Name="Primitive" />
+          </p:NodeReference>
+          <p:TypeAnnotation LastCategoryFullName="VL.BlenderUtils.Parser.DNA" LastDependency="VL.BlenderUtils.csproj">
+            <Choice Kind="TypeFlag" Name="ID" />
+            <FullNameCategoryReference ID="VL.BlenderUtils.Parser.DNA" />
+            <AssemblyReference ID="VL.BlenderUtils.csproj" />
+          </p:TypeAnnotation>
+          <Patch Id="BSZZEG47ZaqP65pam7FdBE">
+            <Canvas Id="GDhwHm8LF00QYjfwfESs0g" BordersChecked="false" CanvasType="Group" />
+            <ProcessDefinition Id="FRhgtuyQY9AOgShcWLDpq0" IsHidden="true" />
+          </Patch>
+        </Node>
+        <!--
+
+    ************************ RenderData ************************
+
+-->
+        <Node Name="RenderData" Bounds="895,250" Id="BrHOkFsrxTpQVWXxnifmfy">
+          <p:NodeReference>
+            <Choice Kind="ForwardDefinition" Name="Forward" />
+            <CategoryReference Kind="Category" Name="Primitive" />
+          </p:NodeReference>
+          <p:TypeAnnotation LastCategoryFullName="VL.BlenderUtils.Parser.DNA" LastDependency="VL.BlenderUtils.csproj">
+            <Choice Kind="TypeFlag" Name="RenderData" />
+            <FullNameCategoryReference ID="VL.BlenderUtils.Parser.DNA" />
+            <AssemblyReference ID="VL.BlenderUtils.csproj" />
+          </p:TypeAnnotation>
+          <Patch Id="ERj6zxkWtSNLx9yITPOQtD">
+            <Canvas Id="P01oIQbT9mNQQEPwXNyIgV" BordersChecked="false" CanvasType="Group" />
+            <ProcessDefinition Id="AGjUK8q7YAaP6E6s0rSwkg" IsHidden="true" />
+          </Patch>
+        </Node>
+      </Canvas>
     </Canvas>
     <!--
 
