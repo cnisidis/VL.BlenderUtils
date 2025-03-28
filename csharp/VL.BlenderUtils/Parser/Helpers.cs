@@ -8,7 +8,48 @@ namespace VL.BlenderUtils.Parser
 {
     public static class Helpers
     {
+        public static object BYTEARRAY(IEnumerable<byte> bytes, ref int index, int Size)
+        {
+            var idx = index;
+            index += Size;
+            return bytes.Skip(idx);
+        }
+        public static char[] PAD(IEnumerable<byte> bytes, ref int index, int size)
+        {
+            var idx = index;
+            index += size;
+            return bytes.Skip(idx).Take(size).Select(x=>(char)x).ToArray();
+        }
+        public static char CHAR(IEnumerable<byte> bytes, ref int index)
+        {
+            var idx = index;
+            index += 1;
+            return (char)bytes.ToArray()[idx];
+        }
         
+        public static float FLOAT(IEnumerable<byte> bytes, ref int index)
+        {
+            var idx = index;
+            index += 4;
+            return BitConverter.ToSingle(bytes.Skip(idx).ToArray());
+        }
+
+        public static dynamic POINTER(IEnumerable<byte> bytes, ref int index, bool Bits64 = true)
+        {
+            var idx = index;
+
+            if(Bits64)
+            {
+                
+                index += 8;
+                return (dynamic)BitConverter.ToUInt64(bytes.Skip(idx).ToArray());
+            }
+            else
+            {
+                index += 4;
+                return (dynamic)BitConverter.ToUInt32(bytes.Skip(idx).ToArray());
+            }
+        }
 
         public static UInt32 SwapBytes(UInt32 value)
         {
