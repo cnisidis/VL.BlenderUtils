@@ -2757,6 +2757,26 @@
             <ProcessDefinition Id="AGjUK8q7YAaP6E6s0rSwkg" IsHidden="true" />
           </Patch>
         </Node>
+        <!--
+
+    ************************ Camera ************************
+
+-->
+        <Node Name="Camera" Bounds="800,350" Id="QimTlqjuLP9NtSFWZWTAYP">
+          <p:NodeReference>
+            <Choice Kind="ForwardDefinition" Name="Forward" />
+            <CategoryReference Kind="Category" Name="Primitive" />
+          </p:NodeReference>
+          <p:TypeAnnotation LastCategoryFullName="VL.BlenderUtils.Parser.DNA" LastDependency="VL.BlenderUtils.csproj">
+            <Choice Kind="TypeFlag" Name="Camera" />
+            <FullNameCategoryReference ID="VL.BlenderUtils.Parser.DNA" />
+            <AssemblyReference ID="VL.BlenderUtils.csproj" />
+          </p:TypeAnnotation>
+          <Patch Id="EVjeUjRWsS6MQdh8K0fjXX">
+            <Canvas Id="ANK46N71BN6LB9y1nO84ez" BordersChecked="false" CanvasType="Group" />
+            <ProcessDefinition Id="IeoDPhL8apGL5mI85oOcGJ" IsHidden="true" />
+          </Patch>
+        </Node>
       </Canvas>
     </Canvas>
     <!--
