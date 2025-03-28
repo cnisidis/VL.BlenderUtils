@@ -27,5 +27,11 @@ namespace VL.BlenderUtils.Parser.DNA
             first = bytes.Take(8);
             last = bytes.Skip(8);
         }
+
+        public static ListBase FromBytes(IEnumerable<byte> bytes, ref int index)
+        {
+            index += 16;
+            return new ListBase(bytes);
+        }
     }
 }
