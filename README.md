@@ -51,9 +51,12 @@ however this must change and be replaced by static functions in order to maintai
 ----------------
 
 
+
 [Blender Block - Kaitai.io](/imgs/kaitai_blender_blend.svg)<img src="imgs/kaitai_blender_blend.svg">
 
 # References
+
+[Makes DNA](https://github.com/blender/blender/tree/main/source/blender/makesdna)
 
 [The Mystery of the Blend](https://github.com/fschutt/mystery-of-the-blend-backup)
 
