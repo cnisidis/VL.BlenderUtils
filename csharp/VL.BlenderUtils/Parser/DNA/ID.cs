@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace VL.BlenderUtils.Parser.DNA
 {
 
-    //https://github.com/dfelinto/blender/blob/master/source/blender/makesdna/DNA_ID.h#L360
+    //https://github.com/blender/blender/blob/main/source/blender/makesdna/DNA_ID.h#L400
     public class ID
     {
         object next { get; set; }
