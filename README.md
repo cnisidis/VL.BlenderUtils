@@ -36,7 +36,12 @@ Blender is a well known 3D Software, free and open source. This vvvv library is 
 
 I visited many sources I found online, best one so far was Kaitai site, they already have a working Parser, it is up to date and probably works nicely, although my itention was to built it from scratch I followed there examples and some of their solutions.
 
-Nonetheless I reached a point where I can identify the different structures and blocks, next I have to mangle with "C" pointers and understand how to map SDNA structures to actual Datablocks.
+Nonetheless best source so far, is a script written in python at [official Blender github repo](https://github.com/blender/blender/blob/main/doc/blender_file_format/BlendFileReader.py), although it seems that it was buggy and hence I had to address a new question regarding the byte padding on [StackOverflow](https://stackoverflow.com/questions/79561711/alignment-is-wrong-when-trying-to-get-offset-while-parsing-blender-file-v4-4/79563536#79563536).
+
+
+//TODO create table with types and their equivalent in C# implementation
+
+//TODO present different types
 
 ---------------
 ### Notes
@@ -46,7 +51,7 @@ however this must change and be replaced by static functions in order to maintai
 
 (needs to create a table with types)
 
-**Quite important, DrawList seems to be deprecated or removed from the official repo although it is presented in the SDNA**
+
 
 ----------------
 
