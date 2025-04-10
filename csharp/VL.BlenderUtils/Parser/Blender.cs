@@ -1,17 +1,49 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Reflection.PortableExecutable;
-using System.Runtime.CompilerServices;
+﻿
 using System.Text;
-using System.Threading.Tasks;
 using VL.Lib.Collections;
+using VL.BlenderUtils;
 
 namespace VL.BlenderUtils.Parser
 {
-    
+    public class BlendFile
+    {
+        public string FilePath { get; set; }
+        private string Identifier;
+
+        BlendFileParser Parser;
+
+        public BlendFile()
+        {
+            
+            Parser = null;
+        }
+
+        public void ReadBlendFile(Lib.IO.Path FilePath)
+        {
+            this.FilePath = FilePath;
+            Parser = new BlendFileParser(FilePath);
+            this.Identifier = new string( Parser.Header.Identifier);
+        }
+
+        public string GetVersion()
+        {
+            var str_vers = "";
+            if (Parser != null && Identifier == "BLENDER")
+            {
+                str_vers = Parser.Header.Version[0] + "." + Parser.Header.Version[1] + "." +Parser.Header.Version[2] ;
+               
+            }
+            
+            return str_vers;
+        }
+
+        public void GetScenes()
+        {
+            
+        }
+        
+
+    }
 
     public class BlendFileParser
     {
@@ -80,7 +112,7 @@ namespace VL.BlenderUtils.Parser
 
             //Read till the end of file and create FileBlocks - Look for DNA1
 
-            while (reader.BaseStream.Position != reader.BaseStream.Length)
+            while (reader.BaseStream.Position < reader.BaseStream.Length)
             {
                 
                 //Read all FileBlocks
@@ -112,6 +144,7 @@ namespace VL.BlenderUtils.Parser
             return _dnaBlocks.ToSpread();
         }
 
+        
         /// <summary>
         /// Helper Function to retrieve specific FileBlocks (by name)
         /// </summary>
@@ -123,6 +156,19 @@ namespace VL.BlenderUtils.Parser
             var lookFor = ToUpper ? Code.ToUpper() : Code;
             return _fileBlocks.FindAll(x=> x.code.Replace('\x00', ' ').Trim() == lookFor).ToSpread();
         }
+
+        public Spread<DNAStruct> GetStructures()
+        {
+            var DNABlock = this.GetDNABlocks().FirstOrDefault();
+            return DNABlock.Structures().ToSpread();
+            
+        }
+
+        public void MapBlocksAndFields()
+        {
+
+        }
+
 
         /// <summary>
         /// Blend File Header
@@ -285,6 +331,8 @@ namespace VL.BlenderUtils.Parser
 
 
             }
+
+           
         }
     }
 
@@ -377,6 +425,25 @@ namespace VL.BlenderUtils.Parser
             Types = _types.ToSpread();
             Lengths = _lengths.ToSpread();
             Structures = _structs.ToSpread();
+        }
+
+        public List<int> Lengths()
+        {
+            return this.Lengths();
+        }
+
+        public List<string> Types()
+        {
+            return this._types;
+        }
+
+        public List<String> Names()
+        {
+            return this._names;
+        }
+        public List<DNAStruct> Structures()
+        {
+            return this._structs;
         }
 
         public void Split(out string Id, out string MagicName, out uint NamesCount, out string MagicType, out uint TypesCount, out string MagicTypesLength, out uint StructuresCount)
@@ -485,8 +552,6 @@ namespace VL.BlenderUtils.Parser
             IndexName = this._idxName;
             Parent = this.Parent;
         }
-
-        
 
     }
     

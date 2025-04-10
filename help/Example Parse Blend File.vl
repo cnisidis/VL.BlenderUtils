@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="T6KwvJMtsXJO78QLwj0buf" LanguageVersion="2025.7.0-0254-gd4018c4ad7" Version="0.128">
-  <NugetDependency Id="F4mFoaiMlXiMTte6i1hExa" Location="VL.CoreLib" Version="2025.7.0-0254-gd4018c4ad7" />
+<Document xmlns:p="property" xmlns:r="reflection" Id="T6KwvJMtsXJO78QLwj0buf" LanguageVersion="2025.7.0-0282-g95954a57af" Version="0.128">
+  <NugetDependency Id="F4mFoaiMlXiMTte6i1hExa" Location="VL.CoreLib" Version="2025.7.0-0282-g95954a57af" />
   <Patch Id="I7N5SHjvNZpNqXYoVKRaIN">
     <Canvas Id="SHRdk6QhIo8MpWwPPO47ER" DefaultCategory="Main" CanvasType="FullCategory" />
     <!--
@@ -15,12 +15,12 @@
       </p:NodeReference>
       <Patch Id="SRHZWjvMhbKOwoReNE0hVQ">
         <Canvas Id="VcKeG673XfwMVCcfS57ftB" CanvasType="Group">
-          <Pad Id="PjUhP1DKwlONcVouzeYzUt" Comment="Blend File" Bounds="518,300,266,20" ShowValueBox="true" isIOBox="true" Value="assets\blender_default_v432.blend">
+          <Pad Id="PjUhP1DKwlONcVouzeYzUt" Comment="Blend File" Bounds="518,220,266,20" ShowValueBox="true" isIOBox="true" Value="assets\blender_default_v432.blend">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="CUWGMLMOqXWLlfspuSPn3d" Comment="Read" Bounds="481,210,35,35" ShowValueBox="true" isIOBox="true" Value="false">
+          <Pad Id="CUWGMLMOqXWLlfspuSPn3d" Comment="Read" Bounds="481,130,35,35" ShowValueBox="true" isIOBox="true" Value="false">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -28,11 +28,11 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Bang</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="480,330,41,19" Id="A5e7u3jQkH2QDGl0LN3RUP">
+          <Node Bounds="480,250,41,19" Id="A5e7u3jQkH2QDGl0LN3RUP">
             <p:NodeReference LastCategoryFullName="VL.BlenderUtils" LastDependency="VL.BlenderUtils.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="BlenderUtils" NeedsToBeDirectParent="true" />
-              <Choice Kind="ProcessAppFlag" Name="Parse" />
+              <Choice Kind="ProcessAppFlag" Name="Parse (Blend File)" />
             </p:NodeReference>
             <Pin Id="EU3DnUCXKpQQar6vxzZSIH" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="NkLSimr0a19LsjQ5GdOtx6" Name="Read" Kind="InputPin" />
@@ -1104,7 +1104,7 @@
             <ControlPoint Id="IJv7SKR2CAdNRPnikJrzpU" Bounds="391,620" Alignment="Bottom" />
             <ControlPoint Id="FU8g8TwohBpOZoLZx3r29i" Bounds="331,620" Alignment="Bottom" />
           </Node>
-          <Pad Id="IDXEwy1NEfSPWbwgC3517s" Comment="Force" Bounds="236,370,35,35" ShowValueBox="true" isIOBox="true" Value="false">
+          <Pad Id="IDXEwy1NEfSPWbwgC3517s" Comment="Force" Bounds="160,400,35,35" ShowValueBox="true" isIOBox="true" Value="false">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -1149,6 +1149,35 @@
           <Pad Id="Am9WFJHuCM7M2Z8Cwzkcqv" Comment="" Bounds="371,770,56,28" ShowValueBox="true" isIOBox="true" />
           <Pad Id="OymjAlqIp3PQEB8jw3bBdg" Comment="" Bounds="391,810,35,28" ShowValueBox="true" isIOBox="true" />
           <Pad Id="SOQr7ZH0kX3PI3s8qMkd7b" Comment="" Bounds="331,680,35,28" ShowValueBox="true" isIOBox="true" />
+          <Node Bounds="569,290,78,26" Id="R1wVmobBMagOFHBDxsdMmq">
+            <p:NodeReference LastCategoryFullName="VL.BlenderUtils.BlendFileParser" LastDependency="VL.BlenderUtils.vl" OverloadStrategy="AllPinsThatAreNotCommon">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="OperationCallFlag" Name="GetStructures" />
+              <PinReference Kind="InputPin" Name="Parser">
+                <p:DataTypeReference p:Type="TypeReference" LastCategoryFullName="VL.BlenderUtils" LastDependency="VL.BlenderUtils.vl">
+                  <Choice Kind="TypeFlag" Name="BlendFileParser" />
+                </p:DataTypeReference>
+              </PinReference>
+              <PinReference Kind="OutputPin" Name="Parser">
+                <p:DataTypeReference p:Type="TypeReference" LastCategoryFullName="VL.BlenderUtils" LastDependency="VL.BlenderUtils.vl">
+                  <Choice Kind="TypeFlag" Name="BlendFileParser" />
+                </p:DataTypeReference>
+              </PinReference>
+            </p:NodeReference>
+            <Pin Id="O5bst7KTIFPOrd6uHKy52u" Name="Parser" Kind="InputPin" />
+            <Pin Id="PJKNwt0H8F2LAyqN52KpNZ" Name="Parser" Kind="OutputPin" />
+            <Pin Id="NO6LvG3cIt5P91Ik8IfCJO" Name="Structures" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="607,251,41,19" Id="L7kILk7edHkPuwzYXyAOMK">
+            <p:NodeReference LastCategoryFullName="VL.BlenderUtils" LastDependency="VL.BlenderUtils.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Parse (Blend File)" />
+            </p:NodeReference>
+            <Pin Id="S6jFJaKq9nVNBXRFEjxoNc" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="S0aaUIp8o1jPJtoMwvcNSd" Name="Read" Kind="InputPin" />
+            <Pin Id="UcMuYV2yhGgQXtNX5MWFVi" Name="Blend File" Kind="InputPin" />
+            <Pin Id="NhEeMHP2BDsQHoCYRIplwE" Name="Blender File" Kind="OutputPin" />
+          </Node>
         </Canvas>
         <Patch Id="RJXJX7COTWUNsdHad4rxs7" Name="Create" />
         <Patch Id="E405LqFsTUzO4Vcj4qpml2" Name="Update" />
@@ -1334,6 +1363,7 @@
         <Link Id="PN5OJZcFFvUPWHWY2GRG1V" Ids="IJv7SKR2CAdNRPnikJrzpU,OymjAlqIp3PQEB8jw3bBdg" />
         <Link Id="UM53Timy58HL46UyrCMP43" Ids="K6cqoBsvmCGLdKEyDczKM5,FU8g8TwohBpOZoLZx3r29i" />
         <Link Id="CfZH5UZd9B1OG9XaSl7FR7" Ids="FU8g8TwohBpOZoLZx3r29i,SOQr7ZH0kX3PI3s8qMkd7b" />
+        <Link Id="FbtE8OyKaskNDehn9STGgu" Ids="ILotsLetmU7QYsYUqsl2EU,O5bst7KTIFPOrd6uHKy52u" />
       </Patch>
     </Node>
   </Patch>

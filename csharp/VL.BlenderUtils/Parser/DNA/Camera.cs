@@ -180,6 +180,7 @@ namespace VL.BlenderUtils.Parser.DNA
 
     public class CameraRuntime()
     {
-        float[][][] drw_corners;
+        float[][][] drw_corners; 
+        float[][] drw_tria;
     }
 }
