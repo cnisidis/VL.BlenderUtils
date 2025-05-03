@@ -4,6 +4,7 @@ using System.Linq;
 using System.Management;
 using System.Text;
 using System.Threading.Tasks;
+using VL.BlenderUtils.Parser.Pythonic;
 
 namespace VL.BlenderUtils.Parser.DNA
 {
@@ -11,14 +12,14 @@ namespace VL.BlenderUtils.Parser.DNA
     public class Scene
     {
         ID id;
-        IntPtr ptrAnimData; //AnimData;
-        IntPtr ptrCamera; //Camera
-        IntPtr ptrWorld; //World
-        IntPtr ptrSet; //Scene
+        ulong ptrAnimData; //AnimData;
+        ulong ptrCamera; //Camera
+        ulong ptrWorld; //World
+        ulong ptrSet; //Scene
 
         ListBase Base; //ListBase DNA_DEPRECATED;
 
-        IntPtr ptrBaseact;
+        ulong ptrBaseact;
 
 
         byte[] cursor; //View3DCursor
@@ -35,10 +36,10 @@ namespace VL.BlenderUtils.Parser.DNA
 
         char[] _pad3 = new char[1];
 
-        IntPtr ptrBNodeTree;
+        ulong ptrBNodeTree;
 
-        IntPtr ptrEd;
-        IntPtr ptrToolSettings;
+        ulong ptrEd;
+        ulong ptrToolSettings;
         object _pad4;
 
         byte[] safe_areas; //DisplaySafeAreas
@@ -111,78 +112,28 @@ namespace VL.BlenderUtils.Parser.DNA
 
         }
 
-        public Scene(IEnumerable<byte> bytes)
+        
+
+
+        public static Scene Read(BinaryReader handle, Pythonic.BlendFile.Header header)
         {
-            var index = 0;
-            var _bytes = bytes.ToArray();
+            Scene scn = new Scene();
+            Console.WriteLine(handle.BaseStream.Position.ToString());
+            scn.id = Reader.ReadBlock(handle, "ID", header);
+            Console.WriteLine(handle.BaseStream.Position.ToString());
+            var animdata = Reader.Read(ReaderType.P, handle, header);
+            scn.ptrAnimData = animdata;
             
-            id = new ID(_bytes);
-            index += id.Size;
-            
-            ptrAnimData = (int)BitConverter.ToUInt64(_bytes.Skip(index).ToArray());
-            index += IntPtr.Size;
-
-            //Drawdata not presented in c file
-            index += 16;
-
-            ptrCamera = (IntPtr)BitConverter.ToUInt64(_bytes.Skip(index).ToArray());
-            index += IntPtr.Size;
-            
-            ptrWorld = (IntPtr)BitConverter.ToUInt64(_bytes.Skip(index).ToArray());
-            index += IntPtr.Size;
-
-            ptrSet = (IntPtr)BitConverter.ToUInt64(_bytes.Skip(index).ToArray());
-            index += IntPtr.Size;
-
-            Base = new ListBase( _bytes.Skip(index).Take(16));
-            index += 16;
-
-            ptrBaseact = (int)BitConverter.ToUInt64(_bytes.Skip(index).ToArray());
-            index += IntPtr.Size;
-
-            //_pad1 void
-            index += IntPtr.Size;
-
-            cursor = _bytes.Skip(index).Take(64).ToArray();
-            index += 64;
-            
-            lay = BitConverter.ToInt32(_bytes.Skip(index).ToArray());
-            index += 4;
-            layact = (int)BitConverter.ToInt32(_bytes.Skip(index).ToArray());
-            index += 4;
-            
-            _pad2 = Encoding.UTF8.GetString( _bytes.Skip(index).Take(4).ToArray()).ToCharArray();
-            index += 4;
-            
-            flag = BitConverter.ToInt16(_bytes.Skip(index).ToArray());
-            index += 2;
-            use_nodes = (char)_bytes[index];
-            index += 1;
-            
-            _pad3 = Encoding.UTF8.GetString(_bytes.Skip(index).Take(1).ToArray()).ToCharArray();
-            index += 1;
-            
-            ptrBNodeTree = (IntPtr)BitConverter.ToUInt64(_bytes.Skip(index).ToArray());
-            index += IntPtr.Size;
-
-            ptrEd = (IntPtr)BitConverter.ToUInt32(_bytes.Skip(index).ToArray());
-            index += IntPtr.Size;
-
-            ptrToolSettings = (int)BitConverter.ToUInt32(_bytes.Skip(index).ToArray());
-            index += IntPtr.Size;
-
-            //_pad4 void
-            index += IntPtr.Size;
-
-            safe_areas = _bytes.Skip(index).Take(32).ToArray();
-            index += 32;
-
-            r = new RenderData(_bytes.Skip(index));
-            index += 4376;
+            scn.ptrCamera = Reader.Read(ReaderType.P, handle, header);
+            scn.ptrWorld = Reader.Read(ReaderType.P, handle, header);
+            scn.ptrSet = Reader.Read(ReaderType.P, handle, header);
+            scn.Base = Reader.ReadBlock(handle, "ListBase", header);
+            Console.WriteLine(animdata);
+            return scn;
 
         }
 
-        public void Split(out ID Id, out IntPtr Camera, out RenderData RenderData)
+        public void Split(out ID Id, out ulong Camera, out RenderData RenderData)
         {
             Id = this.id;
             Camera = this.ptrCamera;

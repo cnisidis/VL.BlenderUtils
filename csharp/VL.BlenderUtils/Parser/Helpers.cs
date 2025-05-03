@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VL.BlenderUtils.Parser.DNA;
 
 namespace VL.BlenderUtils.Parser
 {
@@ -22,6 +23,35 @@ namespace VL.BlenderUtils.Parser
     public static class Reader
     {
 
+
+        public static dynamic ReadBlock(BinaryReader reader, string classType, Pythonic.BlendFile.Header header, ulong fromPointer = 0)
+        {
+            var position = reader.BaseStream.Position;
+            dynamic block = null;
+            
+
+            if (fromPointer !=0)
+                reader.BaseStream.Seek((long)fromPointer, SeekOrigin.Begin);
+            
+            switch (classType)
+            {
+                case "ID":
+                    
+                    block = ID.Read(reader, header);    
+                    break;
+
+                case "ListBase":
+                    block = ListBase.Read(reader, header);
+                    break;
+
+                case "Library":
+                    block = ID.Library.Read(reader);
+                    break;
+            }
+
+            reader.BaseStream.Seek(position, SeekOrigin.Begin);
+            return block;
+        }
         public static string ReadString(BinaryReader reader, int length=0)
         {
             if (length != 0)
@@ -47,7 +77,7 @@ namespace VL.BlenderUtils.Parser
             }
 
         }
-        public static dynamic Read(ReaderType type, BinaryReader reader, BlenderUtils.Parser.Pythonic.BlendFile.Header header)
+        public static dynamic Read(ReaderType type, BinaryReader reader, Pythonic.BlendFile.Header header)
         {
 
             if (type == ReaderType.US)
@@ -74,14 +104,19 @@ namespace VL.BlenderUtils.Parser
             else if(type == ReaderType.P)
             {
                 if (header.LittleEndianess)
-                    return Read(ReaderType.UL, reader, header);
+                    return reader.ReadUInt64();
                 else
-                    return Read(ReaderType.UI, reader, header);
+                    return (ulong)reader.ReadUInt32();
             }
             
             throw new NotImplementedException();
 
             
+        }
+
+        public static dynamic ReadBytes(BinaryReader reader, int Size)
+        {
+            return reader.ReadBytes(Size);
         }
 
         public static void Align(BinaryReader reader)
@@ -97,6 +132,8 @@ namespace VL.BlenderUtils.Parser
             Console.WriteLine(" Offset->{0:G} | Alligned->{1:G}", offset, alignedOffset);
         }
 
+        //In summary, alignment needs to be relative to the starting offset of SDNA, so it seems that this script used to work merely by coincidence.
+        //https://stackoverflow.com/questions/79561711/alignment-is-wrong-when-trying-to-get-offset-while-parsing-blender-file-v4-4/79563536#79563536
         public static void AlignAlt(BinaryReader reader, long startOffset)
         {
             var offset = reader.BaseStream.Position - startOffset;
@@ -115,7 +152,43 @@ namespace VL.BlenderUtils.Parser
 
     }
 
-   
+    public static class Dlegates
+    {
+        public static dynamic ToType()
+        {
+            //Fields
+            //if (true) return;
+            
+            //Array
+            
+            //Vector
+
+            //Const
+
+            //Volatile
+
+            //Unqualified
+
+            //range
+
+            //reference
+
+            //ponter
+
+            //strip_typedefs
+
+            //target
+
+            //template_argument
+
+            //optimized_output
+
+
+
+
+            return null;
+        }
+    }
 
     public static class Helpers
     {

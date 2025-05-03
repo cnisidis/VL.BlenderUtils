@@ -73,7 +73,7 @@ namespace VL.BlenderUtils.Parser.DNA
         public Camera(IEnumerable<byte> _bytes, bool Bits64=true)
         {
             var index = 0;
-            this.id = new ID(_bytes);
+            //this.id = new ID(_bytes);
             index += 208;
             this.adt = Helpers.POINTER(_bytes, ref index, Bits64);
             this.type = (char)_bytes.ToArray()[index];

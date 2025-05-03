@@ -4,8 +4,10 @@
 
 using Stride.Core.Extensions;
 using System.Dynamic;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
+using VL.BlenderUtils.Parser.DNA;
 using VL.Lib.Collections;
 
 namespace VL.BlenderUtils.Parser.Pythonic
@@ -20,9 +22,13 @@ namespace VL.BlenderUtils.Parser.Pythonic
         private bool FoundDnaBlock = false;
         DNACatalog Catalog;
 
+        public List<Scene> Scenes;
+
+        BinaryReader Handle;
         public BlendFile()
         {
             blocks = new List<FileBlock>();
+            Scenes = new List<Scene>();
         }
 
         public void OpenBlendFile(string blendFile)
@@ -31,7 +37,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
             using (var stream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None))
             using (var handle = new BinaryReader(stream))
             {
-
+                Handle = handle;
                 var magic = Reader.ReadString(handle, 7);
                 if(magic.Contains("BLENDER") || magic.Contains("BULLETf"))
                 {
@@ -63,13 +69,31 @@ namespace VL.BlenderUtils.Parser.Pythonic
                     blocks.Add(fileBlock);
 
 
+                    
+
+
                 }
                 else
                 {
                     throw new NotImplementedException();
                 }
-                
 
+                //Time to remap and create realise Structures ?
+                foreach (var block in blocks)
+                {
+                    if (block.Header.Code == "SC")
+                    {
+                        block.Get(handle);
+                        var count = block.Header.Count;
+                        for (int i = 0; i < count; i++)
+                        {
+                            var scn = Scene.Read(handle, header);
+                            Scenes.Add(scn);
+                        }
+
+                    }
+
+                }
             }
 
         }
@@ -80,6 +104,13 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 return this.Catalog;
             else
                 return null;
+        }
+
+        public Spread<Scene> GetScenes()
+        {
+            
+
+            return Scenes.ToSpread();
         }
 
         public void Dispose()
@@ -150,6 +181,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 var dnaIndex = this.Header.SDNAIndex;
                 var dnaStruct = "";
                 handle.BaseStream.Seek(this.Header.FileOffset, SeekOrigin.Begin);
+
             }
 
            
@@ -163,9 +195,9 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
             public string Code;
             uint Size { get; }
-            dynamic OldAddress;
+            ulong OldAddress;
             public uint SDNAIndex;
-            uint Count;
+            public uint Count;
             public long FileOffset;
 
             public FileBlockHeader(BinaryReader handle, Header FileHeader)
@@ -175,6 +207,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 {
                     this.Size = Reader.Read(ReaderType.UI, handle, FileHeader);
                     OldAddress = Reader.Read(ReaderType.P, handle, FileHeader);
+                    //Console.WriteLine(OldAddress);
                     SDNAIndex = Reader.Read(ReaderType.UI, handle, FileHeader);
                     Count = Reader.Read(ReaderType.UI, handle, FileHeader);
                     FileOffset = handle.BaseStream.Position;
@@ -255,12 +288,8 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 }
 
                 Reader.AlignAlt(handle, startOffset);
-                /*
-                if(header.Version >= 404)
-                    handle.BaseStream.Seek(1, SeekOrigin.Current);
-                */
-                //types
-                var TYPE = Reader.ReadString(handle, 4); // in 404 seems that I still get wrong offset, it should be -1, if I hardcode it then I get error on the Lengths bounds on the structures phase
+                
+                var TYPE = Reader.ReadString(handle, 4); 
 
                 if (TYPE != "TYPE")
                 {
@@ -304,31 +333,45 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 var numberOfStructs = Reader.Read(ReaderType.UI, handle, header);
                 Console.WriteLine("Building {0:G} STRUCTS", numberOfStructs);
                 
-                for(int structureIndex =0; structureIndex < numberOfStructs; structureIndex++)
+                
+                for (int structureIndex =0; structureIndex < numberOfStructs; structureIndex++)
                 {
+                    
                     var type = Reader.Read(ReaderType.US, handle, header);
-                    var structure = new DNAStructure(new BType());
-                    Structures.Add(structure);
-
+                    DNAStructure structure = new DNAStructure();
+                    
                     var numberOfFields = Reader.Read(ReaderType.US, handle, header);
                     
-                    for(int fieldIndex=0; fieldIndex<numberOfFields; fieldIndex++)
+
+                    for (int fieldIndex=0; fieldIndex<numberOfFields; fieldIndex++)
                     {
                         var fTypeIndex = Reader.Read(ReaderType.US, handle, header);
+                        
                         var fNameIndex = Reader.Read(ReaderType.US, handle, header);
+                        
                         var fType = Types[fTypeIndex];
                         var fName = Names[fNameIndex];
-                        //structure.Fields.Add(DNAField(fType, fName));
+                        //Console.WriteLine(fName);
+                        //DNAField field = new DNAField(fType, fName);
+                        //Console.WriteLine(field.ToString());
+                        //structure.Fields.Add(field);
+                        
                     }
-                    
+
+                    Structures.Add(structure);
                 }
-                //Reader.Align(handle);
+                
 
             }
 
             public Spread<DNAType> GetTypes()
             {
                 return Types.ToSpread();
+            }
+
+            public Spread<DNAStructure> GetStructures()
+            {
+                return Structures.ToSpread();
             }
         }
 
@@ -410,7 +453,10 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 this.Structure = null;
             }
 
-            
+            public void ToVLType()
+            {
+
+            }
         }
 
 
@@ -429,11 +475,11 @@ namespace VL.BlenderUtils.Parser.Pythonic
         public class DNAStructure
         {
 
-            BType Type;
-            List<DNAField> Fields;
-            public DNAStructure(BType aType)
+            DNAType Type;
+            public List<DNAField> Fields;
+            public DNAStructure()
             {
-                this.Type = aType;
+                //this.Type = aType;
                 Fields = new List<DNAField>();
             }
 
@@ -461,6 +507,11 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
                 return null;
             }
+
+            public void ToString(out string Result)
+            {
+                Result = this.Fields.Count().ToString();
+            }
         }
 
         /// <summary>
@@ -470,12 +521,19 @@ namespace VL.BlenderUtils.Parser.Pythonic
         {
             public DNAType Type;
             public DNAName Name;
+            public string sType;
 
             public DNAField(DNAType aType, DNAName aName)
             {
                 this.Type = aType;
                 this.Name = aName;
 
+            }
+
+            public DNAField(string sType, string aName)
+            {
+                this.sType = sType;
+                this.Name = new DNAName(aName);
             }
 
             public int Size(Header header)
@@ -507,6 +565,11 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
 
                 return 0;
+            }
+
+            public string ToString()
+            {
+                return this.Name + this.Type.ToString();
             }
         }
 

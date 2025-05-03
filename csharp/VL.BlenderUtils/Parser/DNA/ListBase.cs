@@ -33,5 +33,17 @@ namespace VL.BlenderUtils.Parser.DNA
             index += 16;
             return new ListBase(bytes);
         }
+
+
+        public static ListBase Read(BinaryReader handle, Pythonic.BlendFile.Header header)
+        {
+            var listBase = new ListBase();
+
+            listBase.first = Reader.ReadBytes(handle, 8);
+            listBase.last = Reader.ReadBytes(handle, 8);
+
+            return listBase;
+
+        }
     }
 }

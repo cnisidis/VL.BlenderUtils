@@ -21,20 +21,5 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
     }
 
-    public class TypeCode
-    {
-
-    }
-
-    public class Field
-    {
-        int bitPos;
-        int enumVal;
-        string Name;
-        bool artificial;
-        bool isBaseClass;
-        int bitSize;
-        Type type;
-        Type parentType;
-    }
+   
 }
