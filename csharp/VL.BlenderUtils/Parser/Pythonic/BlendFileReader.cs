@@ -3,11 +3,13 @@
 //https://github.com/blender/blender/blob/main/doc/blender_file_format/BlendFileReader.py
 
 using Stride.Core.Extensions;
+using System.CodeDom;
 using System.Dynamic;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using VL.BlenderUtils.Parser.DNA;
+using VL.Core;
 using VL.Lib.Collections;
 
 namespace VL.BlenderUtils.Parser.Pythonic
@@ -22,13 +24,13 @@ namespace VL.BlenderUtils.Parser.Pythonic
         private bool FoundDnaBlock = false;
         DNACatalog Catalog;
 
-        public List<Scene> Scenes;
+        public List<Spread<byte>> Bytes = new();
 
         BinaryReader Handle;
         public BlendFile()
         {
             blocks = new List<FileBlock>();
-            Scenes = new List<Scene>();
+            
         }
 
         public void OpenBlendFile(string blendFile)
@@ -77,25 +79,41 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 {
                     throw new NotImplementedException();
                 }
-
-                //Time to remap and create realise Structures ?
-                foreach (var block in blocks)
                 {
-                    if (block.Header.Code == "SC")
-                    {
-                        block.Get(handle);
-                        var count = block.Header.Count;
-                        for (int i = 0; i < count; i++)
-                        {
-                            var scn = Scene.Read(handle, header);
-                            Scenes.Add(scn);
-                        }
-
-                    }
-
+                    Map();
                 }
             }
 
+        }
+
+        public void Map()
+        {
+            //get and map cameras
+            var Cameras = blocks.FindAll(x => x.Header.Code == "CA").ToSpread();
+            var CamerasBytes = Cameras[0].Parse(this.Handle).ToSpread();
+            this.Bytes.Add(CamerasBytes);
+
+
+            /*
+            foreach (var cam in Cameras)
+            {
+                
+                var count = cam.Header.Count;
+                for(int i =0; i<count; i++)
+                {
+                    
+                }
+             
+            }
+            */
+            //Scenes = blocks.FindAll(x => x.Header.Code == "SC").ToSpread();
+
+
+        }
+
+        public Spread<FileBlock> GetFileBlocks()
+        {
+            return blocks.ToSpread();
         }
 
         public DNACatalog GetDNACatalog()
@@ -106,11 +124,9 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 return null;
         }
 
-        public Spread<Scene> GetScenes()
+        public Spread<Spread<byte>> GetBytes()
         {
-            
-
-            return Scenes.ToSpread();
+            return Bytes.ToSpread();
         }
 
         public void Dispose()
@@ -184,6 +200,16 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
             }
 
+
+            public byte[] Parse(BinaryReader handle, int Size=0)
+            {
+                var dnaIndex = this.Header.SDNAIndex;
+                handle.BaseStream.Seek(this.Header.FileOffset, SeekOrigin.Begin);
+                int s = Size == 0 ? (int)this.Header.Size : (int)Size;
+                return Reader.ReadBytes(handle, s);
+                
+            }
+
            
         }
         /// <summary>
@@ -194,7 +220,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
         {
 
             public string Code;
-            uint Size { get; }
+            public uint Size { get; }
             ulong OldAddress;
             public uint SDNAIndex;
             public uint Count;
@@ -229,6 +255,15 @@ namespace VL.BlenderUtils.Parser.Pythonic
             public void Skip(BinaryReader handle)
             {
                 handle.ReadBytes((int)Size);
+            }
+
+            public void Split(out string Code, out int Size, out int Index, out int Count, out long FileOffset)
+            {
+                Code = this.Code;
+                Size = (int)this.Size;
+                Index = (int)this.SDNAIndex;
+                Count = (int)this.Count;
+                FileOffset = this.FileOffset;
             }
 
 
@@ -338,8 +373,13 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 {
                     
                     var type = Reader.Read(ReaderType.US, handle, header);
-                    DNAStructure structure = new DNAStructure();
-                    
+                    string typeName = Types[type].Name;
+
+                    DNAStructure structure = new DNAStructure
+                    {
+                        TypeName = typeName
+                    };
+
                     var numberOfFields = Reader.Read(ReaderType.US, handle, header);
                     
 
@@ -351,11 +391,12 @@ namespace VL.BlenderUtils.Parser.Pythonic
                         
                         var fType = Types[fTypeIndex];
                         var fName = Names[fNameIndex];
-                        //Console.WriteLine(fName);
-                        //DNAField field = new DNAField(fType, fName);
-                        //Console.WriteLine(field.ToString());
-                        //structure.Fields.Add(field);
                         
+                        
+
+                        var field = new DNAField(fType.Name, fName);
+                        structure.Fields.Add(field);
+
                     }
 
                     Structures.Add(structure);
@@ -460,57 +501,23 @@ namespace VL.BlenderUtils.Parser.Pythonic
         }
 
 
-        public class BType
-        {
-            int alignOf;
-            int sizeOf;
-            
-
-            public BType()
-            {
-
-            }
-        }
 
         public class DNAStructure
         {
 
-            DNAType Type;
-            public List<DNAField> Fields;
-            public DNAStructure()
-            {
-                //this.Type = aType;
-                Fields = new List<DNAField>();
-            }
-
-            public dynamic GetField(Header header, BinaryReader handle, string path)
-            {
-                var splitted = path.Split(new string[] { "."} , StringSplitOptions.RemoveEmptyEntries);
-                var name = splitted[0];
-                var rest = splitted[2];
-                var offset = 0;
-
-                foreach(var field in this.Fields)
-                {
-                    if(field.Name.ShortName() == name)
-                    {
-                        Console.WriteLine("Found {0:G}@{1:G}", name, offset);
-                        handle.BaseStream.Seek(offset, SeekOrigin.Current);
-                        return field.DecodeField(header, handle, rest);
-
-                    }
-                    else
-                    {
-                        offset += field.Size(header);
-                    }
-                }
-
-                return null;
-            }
-
+            public string TypeName;
+            public List<DNAField> Fields { get; set; } = new();
+            
+           
             public void ToString(out string Result)
             {
                 Result = this.Fields.Count().ToString();
+            }
+
+            public void Split(out string Name, out Spread<DNAField> Fields)
+            {
+                Name = TypeName;
+                Fields = this.Fields.ToSpread();
             }
         }
 
@@ -519,57 +526,28 @@ namespace VL.BlenderUtils.Parser.Pythonic
         /// </summary>
         public class DNAField
         {
-            public DNAType Type;
-            public DNAName Name;
-            public string sType;
+            public string Type;
+            public string Name;
+            
 
-            public DNAField(DNAType aType, DNAName aName)
+            public DNAField(string Type, string Name)
             {
-                this.Type = aType;
-                this.Name = aName;
+                this.Type = Type;
+                this.Name = Name;
 
             }
 
-            public DNAField(string sType, string aName)
-            {
-                this.sType = sType;
-                this.Name = new DNAName(aName);
-            }
-
-            public int Size(Header header)
-            {
-                if(Name.IsPointer() || Name.IsMethodPointer())
-                {
-                    return header.PointerSize * Name.ArraySize();
-                }
-                else
-                {
-                    return Type.Size * Name.ArraySize();
-                }
-            }
-
-            public dynamic DecodeField(Header header, BinaryReader handle, string path)
-            {
-                if(path == "")
-                {
-                    if (Name.IsPointer()) return Reader.Read(ReaderType.P, handle, header);
-                    if (Type.Name == "int") return Reader.Read(ReaderType.I, handle, header);
-                    if (Type.Name == "short") return Reader.Read(ReaderType.S, handle, header);
-                    if (Type.Name == "float") return Reader.Read(ReaderType.F, handle, header);
-                    if (Type.Name == "char") return Reader.ReadString(handle, Name.ArraySize());
-                }
-                else
-                {
-                    Type.Structure.GetField(header, handle, path);
-                }
-
-
-                return 0;
-            }
 
             public string ToString()
             {
-                return this.Name + this.Type.ToString();
+                return this.Name + this.Type;
+            }
+
+
+            public void Split(out string Name, out string Type)
+            {
+                Name = this.Name;
+                Type = this.Type;
             }
         }
 

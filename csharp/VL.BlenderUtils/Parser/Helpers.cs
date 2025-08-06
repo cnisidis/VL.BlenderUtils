@@ -37,7 +37,7 @@ namespace VL.BlenderUtils.Parser
             {
                 case "ID":
                     
-                    block = ID.Read(reader, header);    
+                    block = ID.Read(reader.ReadBytes(208));    
                     break;
 
                 case "ListBase":
@@ -218,7 +218,7 @@ namespace VL.BlenderUtils.Parser
             return BitConverter.ToSingle(bytes.Skip(idx).ToArray());
         }
 
-        public static dynamic POINTER(IEnumerable<byte> bytes, ref int index, bool Bits64 = true)
+        public static IntPtr POINTER(IEnumerable<byte> bytes, ref int index, bool Bits64 = true)
         {
             var idx = index;
 
@@ -226,12 +226,12 @@ namespace VL.BlenderUtils.Parser
             {
                 
                 index += 8;
-                return (dynamic)BitConverter.ToUInt64(bytes.Skip(idx).ToArray());
+                return (IntPtr)BitConverter.ToInt64(bytes.Skip(idx).ToArray());
             }
             else
             {
                 index += 4;
-                return (dynamic)BitConverter.ToUInt32(bytes.Skip(idx).ToArray());
+                return (IntPtr)BitConverter.ToInt32(bytes.Skip(idx).ToArray());
             }
         }
 

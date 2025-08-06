@@ -2,105 +2,110 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using VL.BlenderUtils.Parser.Pythonic;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace VL.BlenderUtils.Parser.DNA
 {
 
     //https://github.com/blender/blender/blob/main/source/blender/makesdna/DNA_ID.h#L400
+    [StructLayout(LayoutKind.Sequential)]
     public class ID
     {
-        ulong next { get; set; }
-        ulong prev { get; set; }
+        IntPtr next { get; set; }
+        IntPtr prev { get; set; }
 
-        ID newID;
+        IntPtr newID;
 
-        Library library; //Library
+        IntPtr library; //Library
 
-        ulong ptrAsset_data; //AssetMetaData
-
+        IntPtr ptrAsset_data; //AssetMetaData
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 258)]
         string name; //max 66 chars long
 
         short flag;
         int tag;
         int us;
         int icon_id;
-        int recalc;
+        uint recalc;
 
-        int recalc_up_to_undo_push;
-        int recalc_after_undo_push;
+        uint recalc_up_to_undo_push;
+        uint recalc_after_undo_push;
 
         uint session_uid;
 
-        ulong ptrProperties; //IDProperty 
+        IntPtr properties; //IDProperty 
 
-        ulong ptrOverride_library; //IDOverrideLibrary
+        IntPtr system_properties; //IDOverrideLibrary
 
-        ulong ptrOrigin; //ID
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public byte[] _pad;
+
+        IntPtr override_library;
+
+        IntPtr orig_id; //ID
 
 
-        object py_instance;
+        IntPtr py_instance;
 
-        ulong library_weak_reference; //LibraryWeakReference
+        IntPtr library_weak_reference; //LibraryWeakReference
 
-        byte[] runtime;//ID_Runtime
+        IntPtr runtime;//ID_Runtime
 
-        public int Size;
+        
 
         public ID()
         {
-            Size = 208;
+        
         }
 
        
-        public static ID Read(BinaryReader handle, Pythonic.BlendFile.Header header)
+        public static ID Read(byte[] data)
         {
-            ID id = new ID();
-            id.next = Reader.Read(ReaderType.P, handle, header);
-            id.prev = Reader.Read(ReaderType.P, handle, header);
-            var ptrNewId = Reader.Read(ReaderType.P, handle, header);
-            Console.WriteLine(ptrNewId);
-            id.newID = new ID();
-            var ptrLib = Reader.Read(ReaderType.P, handle, header);
-            Console.WriteLine(ptrLib);
-            id.library = Reader.ReadBlock(handle, "Library", header, ptrLib);
-            var ptrAssetData = Reader.Read(ReaderType.P, handle, header);
-            //id.ptrAsset_data = Reader.Read(ReaderType.P, handle, header);
-            id.name = Reader.ReadString(handle, 66).Replace('\x00', ' ').Trim();
-            id.flag = Reader.Read(ReaderType.S, handle, header);
-            id.tag = Reader.Read(ReaderType.I, handle, header);
-            id.us = Reader.Read(ReaderType.I, handle, header);
-            id.icon_id = Reader.Read(ReaderType.I, handle, header);
-            id.recalc = Reader.Read(ReaderType.I, handle, header);
-            id.recalc_up_to_undo_push = Reader.Read(ReaderType.I, handle, header);
-            id.recalc_after_undo_push = Reader.Read(ReaderType.I, handle, header);
-            id.session_uid = Reader.Read(ReaderType.UI, handle, header);
-            id.ptrProperties = Reader.Read(ReaderType.P, handle, header);
-            id.ptrOverride_library = Reader.Read(ReaderType.P, handle, header);
-            id.ptrOrigin = Reader.Read(ReaderType.P, handle, header);
-            id.py_instance = (object)Reader.Read(ReaderType.P, handle, header);
-            id.library_weak_reference = Reader.Read(ReaderType.P, handle, header);
-            id.runtime = Reader.ReadBytes(handle, 32);
 
-            return id;
+            if (data == null || data.Length == 0)
+                throw new ArgumentException("Camera data is empty.");
+
+            int size = 80;
+
+            if (data.Length < size)
+                throw new ArgumentException($"Data length {data.Length} is smaller than expected Camera struct size {size}.");
+
+            IntPtr ptr = IntPtr.Zero;
+
+            try
+            {
+                // Allocate unmanaged memory
+                ptr = Marshal.AllocHGlobal(size);
+                Marshal.Copy(data, 0, ptr, size);
+
+                // Marshal bytes into Camera object
+                return Marshal.PtrToStructure<ID>(ptr);
+            }
+            finally
+            {
+                if (ptr != IntPtr.Zero)
+                    Marshal.FreeHGlobal(ptr);
+            }
         }
 
-        public void Split(out string Name, out int Size, out int Tag, out uint SessionUID, out Library Library)
+        public void Split(out string Name,  out int Tag, out uint SessionUID, out IntPtr Library)
         {
             Name = this.name;
-            Size = this.Size;
+            
             Tag = this.tag;
             SessionUID = this.session_uid;
             Library = this.library;
         }
 
-
+        [StructLayout(LayoutKind.Sequential)]
         public class Library
         {
             public ID id { get; set; }
-
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
             string filepath; // = new char[1024];
 
             public Library()

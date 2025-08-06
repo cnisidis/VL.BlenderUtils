@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="SRGa8DlFTJLQTkUsEZTOLt" LanguageVersion="2025.7.0-0305-g98ea128603" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="SRGa8DlFTJLQTkUsEZTOLt" LanguageVersion="2025.7.0-0415-g1ba28312cd" Version="0.128">
   <Patch Id="EJwUBW59Yb0PJOK21tdHuL">
     <Canvas Id="M7adSGoPzyXNvJept5fuR4" DefaultCategory="VL.BlenderUtils" CanvasType="FullCategory">
       <!--
@@ -1130,7 +1130,7 @@
     ************************ BlenderFile ************************
 
 -->
-      <Node Name="BlenderFile" Bounds="312,745" Id="AllIp2HZW48OURSVCO9xLp">
+      <Node Name="BlenderFile" Bounds="335,680" Id="AllIp2HZW48OURSVCO9xLp">
         <p:NodeReference LastCategoryFullName="Primitive" LastDependency="builtin">
           <Choice Kind="ContainerDefinition" Name="Process" />
         </p:NodeReference>
@@ -1967,7 +1967,7 @@
           <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Link</p:stringtype>
         </p:ValueBoxSettings>
       </Pad>
-      <Canvas Id="Q8yYg6iUcrtLoxOCMdfd1t" Name="DNA" Position="1117,40">
+      <Canvas Id="Q8yYg6iUcrtLoxOCMdfd1t" Name="DNA" Position="1122,120">
         <!--
 
     ************************ Scene ************************
@@ -2069,7 +2069,7 @@
           </Patch>
         </Node>
       </Canvas>
-      <Canvas Id="ETm2OTStqoRPH9ba7HgO16" Name="Test" Position="1115,-10">
+      <Canvas Id="ETm2OTStqoRPH9ba7HgO16" Name="Test" Position="1120,70">
         <!--
 
     ************************ BlendFile ************************
@@ -2931,6 +2931,86 @@
           </Patch>
         </Node>
       </Canvas>
+      <!--
+
+    ************************ DNAField ************************
+
+-->
+      <Node Name="DNAField" Bounds="1225,120" Id="Pgzagu2swytLfAzKx4FfND">
+        <p:NodeReference>
+          <Choice Kind="ForwardDefinition" Name="Forward" />
+          <CategoryReference Kind="Category" Name="Primitive" />
+        </p:NodeReference>
+        <p:TypeAnnotation LastCategoryFullName="VL.BlenderUtils.Parser.Pythonic.BlendFile" LastDependency="VL.BlenderUtils.csproj">
+          <Choice Kind="TypeFlag" Name="DNAField" />
+          <FullNameCategoryReference ID="VL.BlenderUtils.Parser.Pythonic.BlendFile" />
+          <AssemblyReference ID="VL.BlenderUtils.csproj" />
+        </p:TypeAnnotation>
+        <Patch Id="N0OC2vuxF6zPlK8VrktLrJ">
+          <Canvas Id="MImqq3EgQdlLJhSY82fWfW" BordersChecked="false" CanvasType="Group" />
+          <ProcessDefinition Id="EZpYQrKrTdKNXWVKwW21g0" IsHidden="true" />
+        </Patch>
+      </Node>
+      <!--
+
+    ************************ DNAStructure ************************
+
+-->
+      <Node Name="DNAStructure" Bounds="1346,120" Id="ETwYIG3Sr3iNEapXyAZBoE">
+        <p:NodeReference>
+          <Choice Kind="ForwardDefinition" Name="Forward" />
+          <CategoryReference Kind="Category" Name="Primitive" />
+        </p:NodeReference>
+        <p:TypeAnnotation LastCategoryFullName="VL.BlenderUtils.Parser.Pythonic.BlendFile" LastDependency="VL.BlenderUtils.csproj">
+          <Choice Kind="TypeFlag" Name="DNAStructure" />
+          <FullNameCategoryReference ID="VL.BlenderUtils.Parser.Pythonic.BlendFile" />
+          <AssemblyReference ID="VL.BlenderUtils.csproj" />
+        </p:TypeAnnotation>
+        <Patch Id="Jwb6tvnE3DHQT717cR1mBQ">
+          <Canvas Id="MpfYw8jgnxWLd7twM4s615" CanvasType="Group" />
+          <ProcessDefinition Id="DOgd1463hVKOhb8uX0Gruu" IsHidden="true" />
+        </Patch>
+      </Node>
+      <!--
+
+    ************************ FileBlock ************************
+
+-->
+      <Node Name="FileBlock" Bounds="1542,100" Id="C9Tqzx0aKdNL3XIMGO3FlY">
+        <p:NodeReference>
+          <Choice Kind="ForwardDefinition" Name="Forward" />
+          <CategoryReference Kind="Category" Name="Primitive" />
+        </p:NodeReference>
+        <p:TypeAnnotation LastCategoryFullName="VL.BlenderUtils.Parser.Pythonic.BlendFile" LastDependency="VL.BlenderUtils.csproj">
+          <Choice Kind="TypeFlag" Name="FileBlock" />
+          <FullNameCategoryReference ID="VL.BlenderUtils.Parser.Pythonic.BlendFile" />
+          <AssemblyReference ID="VL.BlenderUtils.csproj" />
+        </p:TypeAnnotation>
+        <Patch Id="H62LwuDphImOkVGiiJJvbk">
+          <Canvas Id="RkTM5M8lGUEOml5GYtEfjn" BordersChecked="false" CanvasType="Group" />
+          <ProcessDefinition Id="PLmuNWUsEYHNjw0uoJQsMM" IsHidden="true" />
+        </Patch>
+      </Node>
+      <!--
+
+    ************************ FileBlockHeader ************************
+
+-->
+      <Node Name="FileBlockHeader" Bounds="1542,133" Id="NgcxMNl5GLXPLLzntcNhna">
+        <p:NodeReference>
+          <Choice Kind="ForwardDefinition" Name="Forward" />
+          <CategoryReference Kind="Category" Name="Primitive" />
+        </p:NodeReference>
+        <p:TypeAnnotation LastCategoryFullName="VL.BlenderUtils.Parser.Pythonic.BlendFile" LastDependency="VL.BlenderUtils.csproj">
+          <Choice Kind="TypeFlag" Name="FileBlockHeader" />
+          <FullNameCategoryReference ID="VL.BlenderUtils.Parser.Pythonic.BlendFile" />
+          <AssemblyReference ID="VL.BlenderUtils.csproj" />
+        </p:TypeAnnotation>
+        <Patch Id="Q4BoDaADkNsNnV1u2z6G3A">
+          <Canvas Id="JoJ4I5vTOcLOzUmNTNlfn6" BordersChecked="false" CanvasType="Group" />
+          <ProcessDefinition Id="MY5cgEyNlWpPtLjvkzcRBu" IsHidden="true" />
+        </Patch>
+      </Node>
     </Canvas>
     <!--
 
@@ -2953,11 +3033,11 @@
       </Patch>
     </Node>
   </Patch>
-  <NugetDependency Id="IYM4CdhpUurLRxgf4cn6Q7" Location="VL.CoreLib" Version="2025.7.0-0305-g98ea128603" />
-  <NugetDependency Id="ULtYv2yalisPooDcAmGtOk" Location="VL.Stride" Version="2025.7.0-0305-g98ea128603" />
+  <NugetDependency Id="IYM4CdhpUurLRxgf4cn6Q7" Location="VL.CoreLib" Version="2025.7.0-0415-g1ba28312cd" />
+  <NugetDependency Id="ULtYv2yalisPooDcAmGtOk" Location="VL.Stride" Version="2025.7.0-0415-g1ba28312cd" />
   <NugetDependency Id="Q0CD0jLlFjMLd9txMFRGnT" Location="System.IO" Version="4.3.0" />
   <NugetDependency Id="MIEikUzccc4LtFnwS3Uddc" Location="System.IO.FileSystem" Version="4.3.0" />
   <NugetDependency Id="FnIH166GyKcPihnypbbn2F" Location="VL.BlenderUtils" Version="0.0.0.0" />
   <ProjectDependency Id="SAgMQ8DcKqeNRDgImyUxSL" Location="./csharp/VL.BlenderUtils/VL.BlenderUtils.csproj" />
-  <NugetDependency Id="AdvGcKSGNilL9nlAq1eUyx" Location="VL.Stride.TextureFX" Version="2025.7.0-0305-g98ea128603" />
+  <NugetDependency Id="AdvGcKSGNilL9nlAq1eUyx" Location="VL.Stride.TextureFX" Version="2025.7.0-0415-g1ba28312cd" />
 </Document>

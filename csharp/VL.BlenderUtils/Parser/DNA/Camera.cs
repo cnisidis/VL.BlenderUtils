@@ -1,135 +1,118 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using VL.Lib.IO.Notifications;
-using Stride.Core.Mathematics;
-using VL.Lib.Collections;
+﻿
+using System.Runtime.InteropServices;
 namespace VL.BlenderUtils.Parser.DNA
 {
     //https://github.com/blender/blender/blob/main/source/blender/makesdna/DNA_camera_types.h
+    [StructLayout(LayoutKind.Sequential)]
     public class Camera
     {
-        ID id;
+        public ID id;
+        public IntPtr adt;
 
-        ulong adt;
+        public byte type;
+        public byte dtx;
+        public short flag;
 
-        char type;
+        public float passepartalpha;
+        public float clip_start;
+        public float clip_end;
+        public float lens;
+        public float ortho_scale;
+        public float drawsize;
+        public float sensor_x;
+        public float sensor_y;
+        public float shiftx;
+        public float shifty;
+        public float dof_distance; // deprecated
 
-        char dtx;
-        short flag;
-        float passepartalpha;
-        float clip_start, clip_end;
-        float lens, ortho_scale, drawsize;
-        float sensor_x, sensor_y;
-        float shiftx, shifty;
-        float dof_distance; //DEPRECATED
+        public byte sensor_fit;
+        public byte panorama_type;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public byte[] _pad;
 
-        char sensor_fit;
-        char panorama_type;
-        char[] _pad = new char[2];
+        public float fisheye_fov;
+        public float fisheye_lens;
+        public float latitude_min;
+        public float latitude_max;
+        public float longitude_min;
+        public float longitude_max;
+        public float fisheye_polynomial_k0;
+        public float fisheye_polynomial_k1;
+        public float fisheye_polynomial_k2;
+        public float fisheye_polynomial_k3;
+        public float fisheye_polynomial_k4;
 
-        /* Fish-eye properties. */
-        float fisheye_fov;
-        float fisheye_lens;
-        float latitude_min, latitude_max;
-        float longitude_min, longitude_max;
-        float fisheye_polynomial_k0;
-        float fisheye_polynomial_k1;
-        float fisheye_polynomial_k2;
-        float fisheye_polynomial_k3;
-        float fisheye_polynomial_k4;
+        public float central_cylindrical_range_u_min;
+        public float central_cylindrical_range_u_max;
+        public float central_cylindrical_range_v_min;
+        public float central_cylindrical_range_v_max;
+        public float central_cylindrical_radius;
+        public float _pad2;
 
-        /* Central cylindrical range properties. */
-        float central_cylindrical_range_u_min;
-        float central_cylindrical_range_u_max;
-        float central_cylindrical_range_v_min;
-        float central_cylindrical_range_v_max;
-        float central_cylindrical_radius;
-        float _pad2;
+        public IntPtr custom_shader;
 
-        /** Old animation system, deprecated for 2.5. */
-        ulong ipo;// DNA_DEPRECATED;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
+        public string custom_filepath;
 
-        ulong dof_ob;// DNA_DEPRECATED;
-        object gpu_dof;//GPUDOFSettings
-        object dof;//CameraDOFSettings
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+        public string custom_bytecode_hash;
 
-        /* CameraBGImage reference images */
-        ListBase bg_images;
+        public IntPtr custom_bytecode;
+        public int custom_mode;
+        public int _pad3;
 
-        object stereo; //CameraStereoSettings
-        object runtime; //CameraRuntime
+        public IntPtr ipo; // deprecated
+        public IntPtr dof_ob; // deprecated
+        public GPUDOFSettings gpu_dof; // deprecated
+        public CameraDOFSettings dof;
 
-        //Camera_Runtime runtime;
+        public ListBase bg_images;
+        public CameraStereoSettings stereo;
+
+        public Camera_Runtime runtime;
 
         public Camera()
         {
 
         }
+        public static Camera ReadCamera(byte[] data)
+        {
+            if (data == null || data.Length == 0)
+                throw new ArgumentException("Camera data is empty.");
 
-        public Camera(IEnumerable<byte> _bytes, bool Bits64=true)
+            int size = Marshal.SizeOf<Camera>();
+
+            if (data.Length < size)
+                throw new ArgumentException($"Data length {data.Length} is smaller than expected Camera struct size {size}.");
+
+            IntPtr ptr = IntPtr.Zero;
+
+            try
+            {
+                // Allocate unmanaged memory
+                ptr = Marshal.AllocHGlobal(size);
+                Marshal.Copy(data, 0, ptr, size);
+
+                // Marshal bytes into Camera object
+                return Marshal.PtrToStructure<Camera>(ptr);
+            }
+            finally
+            {
+                if (ptr != IntPtr.Zero)
+                    Marshal.FreeHGlobal(ptr);
+            }
+        }
+
+        public static Camera ParseCamera(byte[] data)
         {
             var index = 0;
-            //this.id = new ID(_bytes);
-            index += 208;
-            this.adt = Helpers.POINTER(_bytes, ref index, Bits64);
-            this.type = (char)_bytes.ToArray()[index];
-            index += 1;
-            this.dtx = (char)_bytes.ToArray()[index];
-            index += 1;
-            this.flag = BitConverter.ToInt16(_bytes.Skip(index).ToArray());
-            index += 2;
-            this.passepartalpha = Helpers.FLOAT(_bytes, ref index);
-            this.clip_start = Helpers.FLOAT(_bytes, ref index);
-            this.clip_end = Helpers.FLOAT(_bytes, ref index);
-            this.lens = Helpers.FLOAT(_bytes, ref index);
-            this.ortho_scale = Helpers.FLOAT(_bytes, ref index);
-            this.drawsize = Helpers.FLOAT(_bytes, ref index);
-            this.sensor_x = Helpers.FLOAT(_bytes, ref index);
-            this.sensor_y = Helpers.FLOAT(_bytes, ref index);
-            this.shiftx = Helpers.FLOAT(_bytes, ref index); 
-            this.shifty = Helpers.FLOAT(_bytes, ref index);
-            this.dof_distance = Helpers.FLOAT(_bytes, ref index);
+            return new Camera()
+            {
+                
 
-            this.sensor_fit = Helpers.CHAR(_bytes,ref index);
-            this.panorama_type = Helpers.CHAR(_bytes, ref index);
-            this._pad = Helpers.PAD(_bytes, ref index, 2);
-
-            this.fisheye_fov = Helpers.FLOAT(_bytes, ref index);
-            this.fisheye_lens = Helpers.FLOAT(_bytes, ref index);
-            this.latitude_min = Helpers.FLOAT(_bytes, ref index);
-            this.latitude_max = Helpers.FLOAT(_bytes, ref index);
-            this.longitude_min = Helpers.FLOAT(_bytes, ref index);
-            this.longitude_max= Helpers.FLOAT(_bytes, ref index);
-            this.fisheye_polynomial_k0 = Helpers.FLOAT(_bytes, ref index);
-            this.fisheye_polynomial_k1 = Helpers.FLOAT(_bytes, ref index);
-            this.fisheye_polynomial_k2 = Helpers.FLOAT(_bytes, ref index);
-            this.fisheye_polynomial_k3 = Helpers.FLOAT(_bytes, ref index);
-            this.fisheye_polynomial_k4= Helpers.FLOAT(_bytes, ref index);
-
-
-            this.central_cylindrical_range_u_min= Helpers.FLOAT(_bytes, ref index);
-            this.central_cylindrical_range_u_max = Helpers.FLOAT(_bytes, ref index);
-            this.central_cylindrical_range_v_min= Helpers.FLOAT(_bytes, ref index);
-            this.central_cylindrical_range_v_max= Helpers.FLOAT(_bytes, ref index);
-            this.central_cylindrical_radius= Helpers.FLOAT(_bytes, ref index);
-            this._pad2= Helpers.FLOAT(_bytes, ref index);
-
-            this.ipo = Helpers.POINTER(_bytes, ref index, Bits64);
-            this.dof_ob = Helpers.POINTER(_bytes, ref index, Bits64);
-
-            this.gpu_dof = Helpers.BYTEARRAY(_bytes, ref index, 32);
-            this.dof = Helpers.BYTEARRAY(_bytes, ref index, 96);
-            this.bg_images = ListBase.FromBytes(_bytes, ref index);
-            this.stereo = Helpers.BYTEARRAY(_bytes, ref index, 24);
-            this.runtime = Helpers.BYTEARRAY(_bytes, ref index, 216);
-
-
-
+            };
         }
+
 
         public void Split(out ID Id, out CameraType Type, out Stride.Core.Mathematics.Vector2 Cliping, out float Lens, out Stride.Core.Mathematics.Vector2 Sensor, out Stride.Core.Mathematics.Vector2 Shift)
         {
@@ -178,9 +161,68 @@ namespace VL.BlenderUtils.Parser.DNA
         Vertical = 2
     }
 
-    public class CameraRuntime()
+    [StructLayout(LayoutKind.Sequential)]
+    public class Camera_Runtime
     {
-        float[][][] drw_corners; 
-        float[][] drw_tria;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2 * 4 * 2)]
+        public float[] drw_corners;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2 * 2)]
+        public float[] drw_tria;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public float[] drw_depth;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public float[] drw_focusmat;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public float[] drw_normalmat;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public class CameraDOFSettings
+    {
+        public IntPtr focus_object; // Object*
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+        public string focus_subtarget;
+        public float focus_distance;
+        public float aperture_fstop;
+        public float aperture_rotation;
+        public float aperture_ratio;
+        public int aperture_blades;
+        public short flag;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public byte[] _pad;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public class CameraBGImage
+    {
+        public IntPtr next;
+        public IntPtr prev;
+
+        public IntPtr ima; // Image*
+        //public ImageUser iuser;
+        public IntPtr clip; // MovieClip*
+        //public MovieClipUser cuser;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public float[] offset;
+        public float scale;
+        public float rotation;
+        public float alpha;
+        public short flag;
+        public short source;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public class CameraStereoSettings
+    {
+        public float interocular_distance;
+        public float convergence_distance;
+        public short convergence_mode;
+        public short pivot;
+        public short flag;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public byte[] _pad;
+        public float pole_merge_angle_from;
+        public float pole_merge_angle_to;
     }
 }
