@@ -3,6 +3,7 @@
 //https://github.com/blender/blender/blob/main/doc/blender_file_format/BlendFileReader.py
 
 using Stride.Core.Extensions;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using VL.BlenderUtils.Parser.DNA;
@@ -22,15 +23,18 @@ namespace VL.BlenderUtils.Parser
         DNACatalog Catalog;
 
         public Scene Scene;
-        Camera Camera;
+        public Camera Camera;
         public RenderData R;
 
         private FileStream _fileStream;
         private BinaryReader _handle;
+        private Dictionary<IntPtr, FileBlock> Blocks;
         public BlendFile()
         {
             blocks = new List<FileBlock>();
-            
+            Blocks = new Dictionary<IntPtr, FileBlock>();
+
+
         }
 
         public void OpenBlendFile(string blendFile)
@@ -65,12 +69,13 @@ namespace VL.BlenderUtils.Parser
                         fileBlock.Header.Skip(_handle);
 
                     blocks.Add(fileBlock);
+                    Blocks.Add(new IntPtr((long)fileBlock.Header.OldAddress), fileBlock);
                     fileBlock = new FileBlock(_handle, this);
 
 
                 }
-
-                blocks.Add(fileBlock);
+                //END FileBlock
+                //blocks.Add(fileBlock);
             }
             else
             {
@@ -96,7 +101,9 @@ namespace VL.BlenderUtils.Parser
             var total = _fileStream.Read(bytes, 0, (int)size);
             Console.WriteLine($"{offset} {size} {total}");
             Scene = Helpers.BytesToStruct<Scene>(bytes, 0);
-            
+
+            Camera = ResolvePtr<Camera>(Scene.camera);
+
             _fileStream.Seek(0, SeekOrigin.Begin);
 
             var rnd = blocks.FindAll(x => x.Header.Code == "REND").FirstOrDefault();
@@ -110,9 +117,57 @@ namespace VL.BlenderUtils.Parser
             R = Helpers.BytesToStruct<RenderData>(bytes, 0);
             //this.RenderData = Marshal.PtrToStructure<RenderData>(Scene.r);
 
-            //Camera = Marshal.PtrToStructure<Camera>(Scene.camera);
+        }
 
+        /// <summary>
+        /// Lazily resolves a pointer from a data block and deserializes the
+        /// corresponding data into a new struct of type T.
+        /// </summary>
+        /// <typeparam name="T">The type of struct to deserialize the data into.</typeparam>
+        /// <param name="oldAddress">The old memory address (the pointer) found in a data block.</param>
+        /// <returns>A new instance of T with the data, or null if the pointer is invalid or not found.</returns>
+        public T ResolvePtr<T>(IntPtr oldAddress) where T : struct
+        {
+            // Pointers can be null (IntPtr.Zero). We should handle this gracefully.
+            if (oldAddress == IntPtr.Zero)
+            {
+                return default(T);
+            }
 
+            // Look up the pointer's corresponding FileBlock in our pre-parsed index.
+            if (!Blocks.TryGetValue(oldAddress, out var fileBlock))
+            {
+                Console.WriteLine($"Warning: Pointer {oldAddress} not found in the map.");
+                return default(T);
+            }
+
+            // Get the size of the data block from its header.
+            long size = fileBlock.Header.Size;
+
+            // Get the file offset (position) from the header.
+            long offset = fileBlock.Header.FileOffset;
+
+            // CRITICAL: Set the file stream's position to the start of the data block.
+            _fileStream.Position = offset;
+
+            // Create a byte array to hold the data.
+            var bytes = new byte[size];
+
+            // Read the exact number of bytes for the data block.
+            var totalBytesRead = _handle.Read(bytes, 0, (int)size);
+            if (totalBytesRead != size)
+            {
+                Console.WriteLine($"Warning: Expected to read {size} bytes but only read {totalBytesRead} for pointer {oldAddress}.");
+            }
+
+            // Marshal the byte array to the specified generic struct type.
+            // This is a common helper method you likely have.
+            // For demonstration, let's include a simple version of it.
+            GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+            T result = (T)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(T));
+            handle.Free();
+
+            return result;
         }
 
         public Spread<FileBlock> GetFileBlocks()
@@ -224,7 +279,7 @@ namespace VL.BlenderUtils.Parser
 
             public string Code;
             public uint Size { get; }
-            ulong OldAddress;
+            public ulong OldAddress;
             public uint SDNAIndex;
             public uint Count;
             public long FileOffset;

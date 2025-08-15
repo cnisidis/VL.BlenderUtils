@@ -2474,7 +2474,7 @@
     ************************ GetStructures ************************
 
 -->
-              <Node Name="GetStructures" Bounds="1741,433,162,264" Id="OAmD4NkG8m3O8FKcunSpyQ">
+              <Node Name="GetStructures" Bounds="1741,433,163,264" Id="OAmD4NkG8m3O8FKcunSpyQ">
                 <p:NodeReference>
                   <Choice Kind="OperationDefinition" />
                 </p:NodeReference>
@@ -3106,6 +3106,32 @@
             <Pin Id="JwvfZtUkZryLijnrJnvYBy" Name="Input" Kind="InputPin" />
             <Pin Id="UPdH3qW7iyXMlNAHFn2dE0" Name="Output" Kind="OutputPin" />
             <Pin Id="PpsbcLH2HePLVfgoQyt9Hi" Name="R" Kind="OutputPin" />
+          </Patch>
+        </Node>
+        <!--
+
+    ************************ Camera ************************
+
+-->
+        <Node Name="Camera" Bounds="683,510,114,80" Id="CV3Krx6GeXrLFsPT7K1hGh">
+          <p:NodeReference>
+            <Choice Kind="OperationDefinition" Name="Operation" />
+            <CategoryReference Kind="Category" Name="Primitive" />
+          </p:NodeReference>
+          <p:HideCategory p:Type="Boolean">false</p:HideCategory>
+          <Patch Id="IUZ7LwZzIQWM16v8uxB4dg">
+            <Node Bounds="698,539,51,26" AutoConnect="true" Id="JOxbuPK80CbOW9xMb82b1y">
+              <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Parser.BlendFile" LastDependency="VL.BlenderUtils.csproj">
+                <Choice Kind="OperationNode" Name="Camera" />
+                <FullNameCategoryReference ID="VL.BlenderUtils.Parser.BlendFile" />
+              </p:NodeReference>
+              <Pin Id="KH7Jn8sHn3YLq91Y269uYm" Name="Input" Kind="StateInputPin" />
+              <Pin Id="UvSlZI5EZPTM44kW4wnnTd" Name="Output" Kind="StateOutputPin" />
+              <Pin Id="G7Y71QYruCrL0hyDRL6hYX" Name="Camera" Kind="OutputPin" />
+            </Node>
+            <Pin Id="KOmViDsPeksPQp42WyRgvM" Name="Input" Kind="InputPin" />
+            <Pin Id="QgOn6HLzvJrMnyYQVGZUG5" Name="Output" Kind="OutputPin" />
+            <Pin Id="To68IDBKbazPBtwmpEkYX4" Name="Camera" Kind="OutputPin" />
           </Patch>
         </Node>
       </Canvas>
