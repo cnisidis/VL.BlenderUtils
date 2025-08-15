@@ -3,16 +3,11 @@
 //https://github.com/blender/blender/blob/main/doc/blender_file_format/BlendFileReader.py
 
 using Stride.Core.Extensions;
-using System.CodeDom;
-using System.Dynamic;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
-using VL.BlenderUtils.Parser.DNA;
-using VL.Core;
+
 using VL.Lib.Collections;
 
-namespace VL.BlenderUtils.Parser.Pythonic
+namespace VL.BlenderUtils.Parser
 {
     public class BlendFile : IDisposable
     {
@@ -24,9 +19,9 @@ namespace VL.BlenderUtils.Parser.Pythonic
         private bool FoundDnaBlock = false;
         DNACatalog Catalog;
 
-        public List<Spread<byte>> Bytes = new();
 
-        BinaryReader Handle;
+        private FileStream _fileStream;
+        private BinaryReader _handle;
         public BlendFile()
         {
             blocks = new List<FileBlock>();
@@ -35,80 +30,60 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
         public void OpenBlendFile(string blendFile)
         {
-
-            using (var stream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None))
-            using (var handle = new BinaryReader(stream))
+            _fileStream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None);
+            _handle = new BinaryReader(_fileStream) ;
+           
+            var magic = Reader.ReadString(_handle, 7);
+            if (magic.Contains("BLENDER") || magic.Contains("BULLETf"))
             {
-                Handle = handle;
-                var magic = Reader.ReadString(handle, 7);
-                if (magic.Contains("BLENDER") || magic.Contains("BULLETf"))
+                Console.WriteLine("Normal blendfile detected");
+                _handle.BaseStream.Seek(0, SeekOrigin.Begin);
+
+                header = new Header(_handle);
+
+                Console.WriteLine("Version: {0:G} | LittleEndianess: {1:G} | Pointer Size: {2:G}", header.Version, header.LittleEndianess, header.PointerSize);
+
+                var fileBlock = new FileBlock(_handle, this);
+
+                while (!FoundDnaBlock)
                 {
-                    Console.WriteLine("Normal blendfile detected");
-                    handle.BaseStream.Seek(0, SeekOrigin.Begin);
-
-                    header = new Header(handle);
-
-                    Console.WriteLine("Version: {0:G} | LittleEndianess: {1:G} | Pointer Size: {2:G}", header.Version, header.LittleEndianess, header.PointerSize);
-
-                    var fileBlock = new FileBlock(handle, this);
-
-                    while (!FoundDnaBlock)
+                    if (fileBlock.Header.Code.Contains("DNA1") || fileBlock.Header.Code.Contains("SDNA"))
                     {
-                        if (fileBlock.Header.Code.Contains("DNA1") || fileBlock.Header.Code.Contains("SDNA"))
-                        {
-                            Catalog = new DNACatalog(header, handle);
-                            FoundDnaBlock = true;
-                        }
-                        else
-                            fileBlock.Header.Skip(handle);
-
-                        blocks.Add(fileBlock);
-                        fileBlock = new FileBlock(handle, this);
-
-
+                        Catalog = new DNACatalog(header, _handle);
+                        FoundDnaBlock = true;
                     }
+                    else
+                        fileBlock.Header.Skip(_handle);
 
                     blocks.Add(fileBlock);
-
-
-
+                    fileBlock = new FileBlock(_handle, this);
 
 
                 }
-                else
-                {
-                    throw new NotImplementedException();
-                }
-                {
-                    Map();
-                }
+
+                blocks.Add(fileBlock);
+
+
+
+
+
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+            {
+                Map();
+                
             }
 
+            Dispose();
+            
         }
 
         public void Map()
         {
-            //get and map cameras
-            var Cameras = blocks.FindAll(x => x.Header.Code == "CA").ToSpread();
-            var CamerasBytes = Cameras[0].Parse(this.Handle).ToSpread();
-            this.Bytes.Add(CamerasBytes);
-
-
-            /*
-            foreach (var cam in Cameras)
-            {
-                
-                var count = cam.Header.Count;
-                for(int i =0; i<count; i++)
-                {
-                    
-                }
-             
-            }
-            */
-            //Scenes = blocks.FindAll(x => x.Header.Code == "SC").ToSpread();
-
-
+            
         }
 
         public Spread<FileBlock> GetFileBlocks()
@@ -124,14 +99,13 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 return null;
         }
 
-        public Spread<Spread<byte>> GetBytes()
-        {
-            return Bytes.ToSpread();
-        }
+        
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            _fileStream.Dispose();
+            _handle.Dispose();
+            Console.WriteLine("--Parser Was Propserly Disposed");
         }
 
         /// <summary>
@@ -271,7 +245,6 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
         /// <summary>
         /// DNACatalog is a catalog of all information in the DNA1 file-block
-
         /// </summary>
         public partial class DNACatalog
         {
@@ -426,7 +399,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
             public string AsReference(string parent)
             {
-                string result;
+                string result=string.Empty;
 
                 if (parent == null)
                 {

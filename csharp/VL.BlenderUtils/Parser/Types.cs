@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VL.BlenderUtils.Parser.Pythonic
+namespace VL.BlenderUtils.Parser
 {
     public class Type
     {
