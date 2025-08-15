@@ -14,7 +14,7 @@ using VL.Lib.Collections;
 
 namespace VL.BlenderUtils.Parser.Pythonic
 {
-    public class BlendFile:IDisposable
+    public class BlendFile : IDisposable
     {
 
 
@@ -30,18 +30,18 @@ namespace VL.BlenderUtils.Parser.Pythonic
         public BlendFile()
         {
             blocks = new List<FileBlock>();
-            
+
         }
 
         public void OpenBlendFile(string blendFile)
         {
-            
+
             using (var stream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None))
             using (var handle = new BinaryReader(stream))
             {
                 Handle = handle;
                 var magic = Reader.ReadString(handle, 7);
-                if(magic.Contains("BLENDER") || magic.Contains("BULLETf"))
+                if (magic.Contains("BLENDER") || magic.Contains("BULLETf"))
                 {
                     Console.WriteLine("Normal blendfile detected");
                     handle.BaseStream.Seek(0, SeekOrigin.Begin);
@@ -52,7 +52,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
                     var fileBlock = new FileBlock(handle, this);
 
-                    while(!FoundDnaBlock)
+                    while (!FoundDnaBlock)
                     {
                         if (fileBlock.Header.Code.Contains("DNA1") || fileBlock.Header.Code.Contains("SDNA"))
                         {
@@ -65,13 +65,13 @@ namespace VL.BlenderUtils.Parser.Pythonic
                         blocks.Add(fileBlock);
                         fileBlock = new FileBlock(handle, this);
 
-                            
+
                     }
 
                     blocks.Add(fileBlock);
 
 
-                    
+
 
 
                 }
@@ -174,7 +174,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 PointerSize = this.PointerSize;
                 LittleEndianess = this.LittleEndianess;
                 Version = this.Version;
-                
+
             }
         }
         /// <summary>
@@ -201,16 +201,16 @@ namespace VL.BlenderUtils.Parser.Pythonic
             }
 
 
-            public byte[] Parse(BinaryReader handle, int Size=0)
+            public byte[] Parse(BinaryReader handle, int Size = 0)
             {
                 var dnaIndex = this.Header.SDNAIndex;
                 handle.BaseStream.Seek(this.Header.FileOffset, SeekOrigin.Begin);
                 int s = Size == 0 ? (int)this.Header.Size : (int)Size;
                 return Reader.ReadBytes(handle, s);
-                
+
             }
 
-           
+
         }
         /// <summary>
         /// FileBlockHeader contains the information in a file-block-header.
@@ -229,7 +229,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
             public FileBlockHeader(BinaryReader handle, Header FileHeader)
             {
                 this.Code = Reader.ReadString(handle, 4).Replace('\x00', ' ').Trim();
-                if(Code != "ENDB")
+                if (Code != "ENDB")
                 {
                     this.Size = Reader.Read(ReaderType.UI, handle, FileHeader);
                     OldAddress = Reader.Read(ReaderType.P, handle, FileHeader);
@@ -238,7 +238,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
                     Count = Reader.Read(ReaderType.UI, handle, FileHeader);
                     FileOffset = handle.BaseStream.Position;
 
-                    
+
                 }
                 else
                 {
@@ -283,16 +283,16 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 Names = new List<string>();
                 Types = new List<DNAType>();
                 Structures = new List<DNAStructure>();
-                
-                
+
+
                 var startOffset = handle.BaseStream.Position;
                 var SDNA = Reader.ReadString(handle, 4);
-                if(SDNA != "SDNA")
+                if (SDNA != "SDNA")
                 {
                     Console.WriteLine("SDNA tag is not parsed properly - abodring");
                     return;
                 }
-                
+
                 //names
                 var NAME = Reader.ReadString(handle, 4);
                 if (NAME != "NAME")
@@ -308,35 +308,35 @@ namespace VL.BlenderUtils.Parser.Pythonic
                  * "[3]"  members. we rename "[3]", and later set the type of
                  * "gravity" to "void" so the offsets work out correct */
 
-                for (int i =0; i<numberOfNames; i++)
+                for (int i = 0; i < numberOfNames; i++)
                 {
                     var name = Reader.ReadString(handle);
-                    
-                    if(name.IndexOf("[") == 0 && Regex.IsMatch(name, @"(\[+\d+\])"))
+
+                    if (name.IndexOf("[") == 0 && Regex.IsMatch(name, @"(\[+\d+\])"))
                     {
                         Console.WriteLine("{0:G} is not parsed properly", name);
                         var newName = Names[i - 1];
-                        name = newName+name;
-                        
+                        name = newName + name;
+
                     }
                     Names.Add(name);
                 }
 
                 Reader.AlignAlt(handle, startOffset);
-                
-                var TYPE = Reader.ReadString(handle, 4); 
+
+                var TYPE = Reader.ReadString(handle, 4);
 
                 if (TYPE != "TYPE")
                 {
                     Console.WriteLine("Error on Parsing Types - Alignment is wrong: {0:G}", TYPE);
                     return;
                 }
-                    
-                
-                
+
+
+
                 var numberOfTypes = Reader.Read(ReaderType.UI, handle, header);
                 Console.WriteLine("Building {0:G} TYPES", numberOfTypes);
-                
+
                 for (int i = 0; i < numberOfTypes; i++)
                 {
                     var type = Reader.ReadString(handle);
@@ -349,29 +349,29 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 //types lengths
                 var TLEN = Reader.ReadString(handle, 4);
                 Console.WriteLine("Building {0:G} TYPE-LENGTHs", numberOfTypes);
-                
+
                 for (int i = 0; i < numberOfTypes; i++)
                 {
                     var length = Reader.Read(ReaderType.US, handle, header);
                     //Get dnaType and set its size
                     Types[i].Size = length;
-                    
+
                 }
                 Reader.AlignAlt(handle, startOffset);
 
                 //structs
                 var STRC = Reader.ReadString(handle, 4);
-                if(STRC != "STRC")
+                if (STRC != "STRC")
                 {
                     return;
                 }
                 var numberOfStructs = Reader.Read(ReaderType.UI, handle, header);
                 Console.WriteLine("Building {0:G} STRUCTS", numberOfStructs);
-                
-                
-                for (int structureIndex =0; structureIndex < numberOfStructs; structureIndex++)
+
+
+                for (int structureIndex = 0; structureIndex < numberOfStructs; structureIndex++)
                 {
-                    
+
                     var type = Reader.Read(ReaderType.US, handle, header);
                     string typeName = Types[type].Name;
 
@@ -381,18 +381,18 @@ namespace VL.BlenderUtils.Parser.Pythonic
                     };
 
                     var numberOfFields = Reader.Read(ReaderType.US, handle, header);
-                    
 
-                    for (int fieldIndex=0; fieldIndex<numberOfFields; fieldIndex++)
+
+                    for (int fieldIndex = 0; fieldIndex < numberOfFields; fieldIndex++)
                     {
                         var fTypeIndex = Reader.Read(ReaderType.US, handle, header);
-                        
+
                         var fNameIndex = Reader.Read(ReaderType.US, handle, header);
-                        
+
                         var fType = Types[fTypeIndex];
                         var fName = Names[fNameIndex];
-                        
-                        
+
+
 
                         var field = new DNAField(fType.Name, fName);
                         structure.Fields.Add(field);
@@ -401,7 +401,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
                     Structures.Add(structure);
                 }
-                
+
 
             }
 
@@ -442,7 +442,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 result = result.Replace("(", "");
                 result = result.Replace(")", "");
                 var index = result.ToCharArray().IndexOf('[');
-                if(index != -1)
+                if (index != -1)
                 {
                     result = new string(result.ToCharArray().Take(index).ToArray());
                 }
@@ -452,7 +452,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
             public bool IsPointer()
             {
-                return Name.IndexOf('*') > -1;     
+                return Name.IndexOf('*') > -1;
             }
 
             public bool IsMethodPointer()
@@ -467,12 +467,12 @@ namespace VL.BlenderUtils.Parser.Pythonic
                 var tmp = Name;
                 var idx = Name.IndexOf('[');
 
-                while(idx != -1)
+                while (idx != -1)
                 {
                     var idx2 = tmp.IndexOf(']');
-                    var mult = int.Parse( new string ((tmp.Skip(idx + 1).Take(idx2).ToArray())));
+                    var mult = int.Parse(new string((tmp.Skip(idx + 1).Take(idx2).ToArray())));
                     result *= mult;
-                    tmp = new string (tmp.Skip(idx2+1).ToArray());
+                    tmp = new string(tmp.Skip(idx2 + 1).ToArray());
                     idx = tmp.IndexOf('[');
                 }
 
@@ -507,8 +507,8 @@ namespace VL.BlenderUtils.Parser.Pythonic
 
             public string TypeName;
             public List<DNAField> Fields { get; set; } = new();
-            
-           
+
+
             public void ToString(out string Result)
             {
                 Result = this.Fields.Count().ToString();
@@ -528,7 +528,7 @@ namespace VL.BlenderUtils.Parser.Pythonic
         {
             public string Type;
             public string Name;
-            
+
 
             public DNAField(string Type, string Name)
             {

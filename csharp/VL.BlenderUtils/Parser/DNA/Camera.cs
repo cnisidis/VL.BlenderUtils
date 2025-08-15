@@ -1,18 +1,24 @@
 ﻿
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 namespace VL.BlenderUtils.Parser.DNA
 {
     //https://github.com/blender/blender/blob/main/source/blender/makesdna/DNA_camera_types.h
+
+
+    // This is crucial. It ensures the C# struct's memory layout matches
+    // the C++ struct's memory layout. `LayoutKind.Sequential`
+    // means fields are laid out in the order they are declared.
     [StructLayout(LayoutKind.Sequential)]
-    public class Camera
+    public struct Camera
     {
         public ID id;
         public IntPtr adt;
-
+        [MarshalAs(UnmanagedType.I1)]
         public byte type;
+        [MarshalAs(UnmanagedType.I1)]
         public byte dtx;
         public short flag;
-
         public float passepartalpha;
         public float clip_start;
         public float clip_end;
@@ -23,13 +29,13 @@ namespace VL.BlenderUtils.Parser.DNA
         public float sensor_y;
         public float shiftx;
         public float shifty;
-        public float dof_distance; // deprecated
-
+        public float dof_distance;
+        [MarshalAs(UnmanagedType.I1)]
         public byte sensor_fit;
+        [MarshalAs(UnmanagedType.I1)]
         public byte panorama_type;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
         public byte[] _pad;
-
         public float fisheye_fov;
         public float fisheye_lens;
         public float latitude_min;
@@ -41,91 +47,124 @@ namespace VL.BlenderUtils.Parser.DNA
         public float fisheye_polynomial_k2;
         public float fisheye_polynomial_k3;
         public float fisheye_polynomial_k4;
-
         public float central_cylindrical_range_u_min;
         public float central_cylindrical_range_u_max;
         public float central_cylindrical_range_v_min;
         public float central_cylindrical_range_v_max;
         public float central_cylindrical_radius;
         public float _pad2;
-
         public IntPtr custom_shader;
-
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
         public string custom_filepath;
-
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-        public string custom_bytecode_hash;
-
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
+        public byte[] custom_bytecode_hash;
         public IntPtr custom_bytecode;
         public int custom_mode;
         public int _pad3;
-
-        public IntPtr ipo; // deprecated
-        public IntPtr dof_ob; // deprecated
-        public GPUDOFSettings gpu_dof; // deprecated
+        public IntPtr ipo;
+        public IntPtr dof_ob;
+        public GPUDOFSettings gpu_dof;
+        // This is now a concrete struct, not a placeholder
         public CameraDOFSettings dof;
-
+        // This is now a concrete struct, not a placeholder
         public ListBase bg_images;
+        // This is now a concrete struct, not a placeholder
         public CameraStereoSettings stereo;
-
+        // This is now a concrete struct, not a placeholder
         public Camera_Runtime runtime;
-
-        public Camera()
-        {
-
-        }
-        public static Camera ReadCamera(byte[] data)
-        {
-            if (data == null || data.Length == 0)
-                throw new ArgumentException("Camera data is empty.");
-
-            int size = Marshal.SizeOf<Camera>();
-
-            if (data.Length < size)
-                throw new ArgumentException($"Data length {data.Length} is smaller than expected Camera struct size {size}.");
-
-            IntPtr ptr = IntPtr.Zero;
-
-            try
-            {
-                // Allocate unmanaged memory
-                ptr = Marshal.AllocHGlobal(size);
-                Marshal.Copy(data, 0, ptr, size);
-
-                // Marshal bytes into Camera object
-                return Marshal.PtrToStructure<Camera>(ptr);
-            }
-            finally
-            {
-                if (ptr != IntPtr.Zero)
-                    Marshal.FreeHGlobal(ptr);
-            }
-        }
-
-        public static Camera ParseCamera(byte[] data)
-        {
-            var index = 0;
-            return new Camera()
-            {
-                
-
-            };
-        }
-
-
-        public void Split(out ID Id, out CameraType Type, out Stride.Core.Mathematics.Vector2 Cliping, out float Lens, out Stride.Core.Mathematics.Vector2 Sensor, out Stride.Core.Mathematics.Vector2 Shift)
-        {
-            Id = this.id;
-            Type = (CameraType)this.type;
-            Cliping = new Stride.Core.Mathematics.Vector2(this.clip_start, this.clip_end);
-            Lens = this.lens;
-            Sensor = new Stride.Core.Mathematics.Vector2(this.sensor_x, this.sensor_y);
-            Shift = new Stride.Core.Mathematics.Vector2(this.shiftx, this.shifty);
-        }
-
     }
 
+    
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CameraStereoSettings
+    {
+        public float interocular_distance;
+        public float convergence_distance;
+        public short convergence_mode;
+        public short pivot;
+        public short flag;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public byte[] _pad;
+        public float pole_merge_angle_from;
+        public float pole_merge_angle_to;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CameraBGImage
+    {
+        // C++: struct CameraBGImage *next, *prev;
+        // Pointers to other structs are represented as IntPtr.
+        public IntPtr next;
+        public IntPtr prev;
+
+        // C++: struct Image *ima;
+        public IntPtr ima;
+        // C++: struct ImageUser iuser;
+        public ImageUser iuser;
+        // C++: struct MovieClip *clip;
+        public IntPtr clip;
+        // C++: struct MovieClipUser cuser;
+        public MovieClipUser cuser;
+
+        // C++: float offset[2], scale, rotation;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public float[] offset;
+        public float scale;
+        public float rotation;
+
+        // C++: float alpha;
+        public float alpha;
+        // C++: short flag;
+        public short flag;
+        // C++: short source;
+        public short source;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CameraDOFSettings
+    {
+        // C++: struct Object *focus_object;
+        public IntPtr focus_object;
+
+        // C++: char focus_subtarget[64];
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+        public string focus_subtarget;
+
+        public float focus_distance;
+        public float aperture_fstop;
+        public float aperture_rotation;
+        public float aperture_ratio;
+        public int aperture_blades;
+        public short flag;
+
+        // C++: char _pad[2];
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public byte[] _pad;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Camera_Runtime
+    {
+        // C++: float drw_corners[2][4][2];
+        // A 3D array in C++. We flatten it into a 1D array in C#.
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2 * 4 * 2)]
+        public float[] drw_corners;
+
+        // C++: float drw_tria[2][2];
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2 * 2)]
+        public float[] drw_tria;
+
+        // C++: float drw_depth[2];
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public float[] drw_depth;
+
+        // C++: float drw_focusmat[4][4];
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4 * 4)]
+        public float[] drw_focusmat;
+
+        // C++: float drw_normalmat[4][4];
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4 * 4)]
+        public float[] drw_normalmat;
+    }
     public enum CameraType
     {
         Perspective = 0,
@@ -161,68 +200,4 @@ namespace VL.BlenderUtils.Parser.DNA
         Vertical = 2
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public class Camera_Runtime
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2 * 4 * 2)]
-        public float[] drw_corners;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2 * 2)]
-        public float[] drw_tria;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public float[] drw_depth;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public float[] drw_focusmat;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public float[] drw_normalmat;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public class CameraDOFSettings
-    {
-        public IntPtr focus_object; // Object*
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-        public string focus_subtarget;
-        public float focus_distance;
-        public float aperture_fstop;
-        public float aperture_rotation;
-        public float aperture_ratio;
-        public int aperture_blades;
-        public short flag;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public byte[] _pad;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public class CameraBGImage
-    {
-        public IntPtr next;
-        public IntPtr prev;
-
-        public IntPtr ima; // Image*
-        //public ImageUser iuser;
-        public IntPtr clip; // MovieClip*
-        //public MovieClipUser cuser;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public float[] offset;
-        public float scale;
-        public float rotation;
-        public float alpha;
-        public short flag;
-        public short source;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public class CameraStereoSettings
-    {
-        public float interocular_distance;
-        public float convergence_distance;
-        public short convergence_mode;
-        public short pivot;
-        public short flag;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public byte[] _pad;
-        public float pole_merge_angle_from;
-        public float pole_merge_angle_to;
-    }
 }

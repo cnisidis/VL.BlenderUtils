@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="SRGa8DlFTJLQTkUsEZTOLt" LanguageVersion="2025.7.0-0415-g1ba28312cd" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="SRGa8DlFTJLQTkUsEZTOLt" LanguageVersion="2025.7.0-0517-ge070c1d18e" Version="0.128">
   <Patch Id="EJwUBW59Yb0PJOK21tdHuL">
     <Canvas Id="M7adSGoPzyXNvJept5fuR4" DefaultCategory="VL.BlenderUtils" CanvasType="FullCategory">
       <!--
@@ -666,6 +666,7 @@
                   </Node>
                   <Patch Id="Cmwc6gi0fHdPTWQyvo7fHD" Name="Dispose" />
                 </Patch>
+                <Pin Id="NvI1ApJwAkgL0Awq1xEP7X" Name="Warn" Kind="InputPin" />
               </Node>
               <Node Bounds="1218,1410,95,19" Id="H6K23InfgGgOJUwbe7Coco">
                 <p:NodeReference LastCategoryFullName="VL.BlenderUtils" LastDependency="VL.BlenderUtils.vl">
@@ -796,6 +797,7 @@
                   </Node>
                   <Patch Id="Vf28SbeE93aNy4KaSbZn10" Name="Dispose" />
                 </Patch>
+                <Pin Id="TSzcPW7wqWYOxeLhzRTmNy" Name="Warn" Kind="InputPin" />
               </Node>
               <Node Bounds="1327,1402,95,19" Id="GtwWyXdlEMNOBIMGphAjva">
                 <p:NodeReference LastCategoryFullName="VL.BlenderUtils" LastDependency="VL.BlenderUtils.vl">
@@ -2086,75 +2088,8 @@
             <AssemblyReference ID="VL.BlenderUtils.csproj" />
           </p:TypeAnnotation>
           <Patch Id="Vv6s3rNZsNIMgyMYUCMMLK">
-            <Canvas Id="KmpHHimIlnnNVXOL2aCIPE" CanvasType="Group">
-              <!--
-
-    ************************ Scenes ************************
-
--->
-              <Node Name="Scenes" Bounds="770,313,149,214" Id="Ny1JzzWKosLLF2AB27jTri">
-                <p:NodeReference>
-                  <Choice Kind="OperationDefinition" />
-                </p:NodeReference>
-                <Patch Id="R38fLkLfWrTNulHTv1XTnj">
-                  <ControlPoint Id="RvDsugCq0EtMfAhUKdGxpd" Bounds="807,331" />
-                  <Pin Id="MCQePWLBbqFMTlJhNf6dAP" Name="Blend File" Kind="InputPin">
-                    <p:TypeAnnotation LastCategoryFullName="VL.BlenderUtils.Test" LastDependency="VL.BlenderUtils.vl">
-                      <Choice Kind="TypeFlag" Name="BlendFile" />
-                      <FullNameCategoryReference ID="VL.BlenderUtils.Test" />
-                    </p:TypeAnnotation>
-                  </Pin>
-                  <Link Id="JGsrmwTTwQQQHaMCb5F0Dg" Ids="MCQePWLBbqFMTlJhNf6dAP,RvDsugCq0EtMfAhUKdGxpd" IsHidden="true" />
-                  <Node Bounds="793,360,65,19" Id="Q06HaehpwCGN0zHSJ79JO1">
-                    <p:NodeReference LastCategoryFullName="Primitive.Object" LastDependency="VL.CoreLib.vl">
-                      <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-                      <Choice Kind="OperationCallFlag" Name="IsAssigned" />
-                    </p:NodeReference>
-                    <Pin Id="DIzXaeByHerO8tiIwr98Di" Name="X" Kind="InputPin" />
-                    <Pin Id="O7pB5BvJF1bMXJyKLVDWNs" Name="Result" Kind="OutputPin" />
-                    <Pin Id="IrXVu4JdHfJNLE7xFH7gnk" Name="Not Assigned" Kind="OutputPin" />
-                  </Node>
-                  <Link Id="Eimh6h55GzyPUMPgqqtNHp" Ids="RvDsugCq0EtMfAhUKdGxpd,DIzXaeByHerO8tiIwr98Di" />
-                  <Node Bounds="793,412,89,80" Id="BUF36Llpg2PNIBByo9ZGfw">
-                    <p:NodeReference LastCategoryFullName="Primitive" LastDependency="Builtin">
-                      <Choice Kind="StatefulRegion" Name="Region (Stateful)" Fixed="true" />
-                      <CategoryReference Kind="Category" Name="Primitive" />
-                      <Choice Kind="ApplicationStatefulRegion" Name="If" />
-                    </p:NodeReference>
-                    <Pin Id="ADLAyrcTqWJLeTEU6GjCjA" Name="Condition" Kind="InputPin" />
-                    <Patch Id="APshZ2XDIwqQZZDLl0eDmj" ManuallySortedPins="true">
-                      <Patch Id="RDhz8hRCKkCO6LCjrLh3qi" Name="Create" ManuallySortedPins="true" />
-                      <Patch Id="H6m9UN6gCwfOHM7bsN8y5O" Name="Then" ManuallySortedPins="true" />
-                      <Node Bounds="805,441,63,26" Id="Tjqh5Jz6HdhMYwVNNZF47H">
-                        <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Test.BlendFile" LastDependency="VL.BlenderUtils.vl">
-                          <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-                          <CategoryReference Kind="ClassType" Name="BlendFile" NeedsToBeDirectParent="true">
-                            <p:OuterCategoryReference Kind="Category" Name="Test" NeedsToBeDirectParent="true" />
-                          </CategoryReference>
-                          <Choice Kind="OperationCallFlag" Name="GetScenes" />
-                        </p:NodeReference>
-                        <Pin Id="Uv1vN2cTAt3LNINq9FFWtB" Name="Input" Kind="StateInputPin" />
-                        <Pin Id="SVcqdQcaknYLrgmlYX1Br5" Name="Output" Kind="StateOutputPin" />
-                        <Pin Id="JUmsXgvlqQ2LvzDx8jwVzo" Name="Result" Kind="OutputPin" />
-                      </Node>
-                    </Patch>
-                    <ControlPoint Id="VLtmCdbBKnqP1QBhMp6fgA" Bounds="865,486" Alignment="Bottom" />
-                    <ControlPoint Id="JNswCeMFRwLL4opIgDAs4H" Bounds="865,418" Alignment="Top" />
-                  </Node>
-                  <Link Id="Uc2riq4SfhhNDWRreIhCIM" Ids="O7pB5BvJF1bMXJyKLVDWNs,ADLAyrcTqWJLeTEU6GjCjA" />
-                  <Link Id="H5lkKYze5jtPXmlGwkJsxi" Ids="JNswCeMFRwLL4opIgDAs4H,VLtmCdbBKnqP1QBhMp6fgA" IsFeedback="true" />
-                  <Link Id="Mqso0Glem10Oa63xtCMt8I" Ids="JUmsXgvlqQ2LvzDx8jwVzo,VLtmCdbBKnqP1QBhMp6fgA" />
-                  <Link Id="FKgNpF8XLYnNZLevGVY0OU" Ids="VLtmCdbBKnqP1QBhMp6fgA,VE46ab969JNOcz99Vx4pZI" />
-                  <ControlPoint Id="VE46ab969JNOcz99Vx4pZI" Bounds="865,510" />
-                  <Pin Id="VupgYAgDNl6QZp3z1J9HdJ" Name="Scenes" Kind="OutputPin" />
-                  <Link Id="RaBXoy5gy4mNEGZUXSbD7P" Ids="VE46ab969JNOcz99Vx4pZI,VupgYAgDNl6QZp3z1J9HdJ" IsHidden="true" />
-                  <Link Id="RFkNIahlesCMIcpMETXpnb" Ids="RvDsugCq0EtMfAhUKdGxpd,Uv1vN2cTAt3LNINq9FFWtB" />
-                </Patch>
-              </Node>
-            </Canvas>
-            <ProcessDefinition Id="VARlPeD6MuOQTIKRLMi0Em" IsHidden="true">
-              <Fragment Id="QUQKM7dj7ADPpbWQlKQKpR" Patch="Ny1JzzWKosLLF2AB27jTri" />
-            </ProcessDefinition>
+            <Canvas Id="KmpHHimIlnnNVXOL2aCIPE" CanvasType="Group" />
+            <ProcessDefinition Id="VARlPeD6MuOQTIKRLMi0Em" IsHidden="true" />
           </Patch>
         </Node>
         <!--
@@ -3033,11 +2968,11 @@
       </Patch>
     </Node>
   </Patch>
-  <NugetDependency Id="IYM4CdhpUurLRxgf4cn6Q7" Location="VL.CoreLib" Version="2025.7.0-0415-g1ba28312cd" />
-  <NugetDependency Id="ULtYv2yalisPooDcAmGtOk" Location="VL.Stride" Version="2025.7.0-0415-g1ba28312cd" />
+  <NugetDependency Id="IYM4CdhpUurLRxgf4cn6Q7" Location="VL.CoreLib" Version="2025.7.0-0517-ge070c1d18e" />
+  <NugetDependency Id="ULtYv2yalisPooDcAmGtOk" Location="VL.Stride" Version="2025.7.0-0517-ge070c1d18e" />
   <NugetDependency Id="Q0CD0jLlFjMLd9txMFRGnT" Location="System.IO" Version="4.3.0" />
   <NugetDependency Id="MIEikUzccc4LtFnwS3Uddc" Location="System.IO.FileSystem" Version="4.3.0" />
   <NugetDependency Id="FnIH166GyKcPihnypbbn2F" Location="VL.BlenderUtils" Version="0.0.0.0" />
   <ProjectDependency Id="SAgMQ8DcKqeNRDgImyUxSL" Location="./csharp/VL.BlenderUtils/VL.BlenderUtils.csproj" />
-  <NugetDependency Id="AdvGcKSGNilL9nlAq1eUyx" Location="VL.Stride.TextureFX" Version="2025.7.0-0415-g1ba28312cd" />
+  <NugetDependency Id="AdvGcKSGNilL9nlAq1eUyx" Location="VL.Stride.TextureFX" Version="2025.7.0-0517-ge070c1d18e" />
 </Document>

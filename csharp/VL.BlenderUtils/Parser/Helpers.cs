@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using VL.BlenderUtils.Parser.DNA;
+using static VL.BlenderUtils.Parser.Pythonic.BlendFile;
 
 namespace VL.BlenderUtils.Parser
 {
@@ -30,24 +32,7 @@ namespace VL.BlenderUtils.Parser
             dynamic block = null;
             
 
-            if (fromPointer !=0)
-                reader.BaseStream.Seek((long)fromPointer, SeekOrigin.Begin);
             
-            switch (classType)
-            {
-                case "ID":
-                    
-                    block = ID.Read(reader.ReadBytes(208));    
-                    break;
-
-                case "ListBase":
-                    block = ListBase.Read(reader, header);
-                    break;
-
-                case "Library":
-                    block = ID.Library.Read(reader);
-                    break;
-            }
 
             reader.BaseStream.Seek(position, SeekOrigin.Begin);
             return block;
@@ -103,6 +88,8 @@ namespace VL.BlenderUtils.Parser
             
             else if(type == ReaderType.P)
             {
+
+
                 if (header.LittleEndianess)
                     return reader.ReadUInt64();
                 else
@@ -152,46 +139,46 @@ namespace VL.BlenderUtils.Parser
 
     }
 
-    public static class Dlegates
-    {
-        public static dynamic ToType()
-        {
-            //Fields
-            //if (true) return;
-            
-            //Array
-            
-            //Vector
-
-            //Const
-
-            //Volatile
-
-            //Unqualified
-
-            //range
-
-            //reference
-
-            //ponter
-
-            //strip_typedefs
-
-            //target
-
-            //template_argument
-
-            //optimized_output
-
-
-
-
-            return null;
-        }
-    }
+    
 
     public static class Helpers
     {
+
+        /// <summary>
+        /// Marshals data from a byte array to a struct, starting at a specific offset.
+        /// This method pins the byte array to avoid memory copying, making it efficient.
+        /// </summary>
+        /// <typeparam name="T">The type of the struct to marshal.</typeparam>
+        /// <param name="byteArray">The source byte array.</param>
+        /// <param name="offset">The offset in the array to begin reading from.</param>
+        /// <returns>A new instance of the struct populated with the data.</returns>
+        public static T BytesToStruct<T>(byte[] byteArray, int offset) where T : struct
+        {
+            // Allocate a GCHandle to pin the byte array in memory.
+            GCHandle handle = GCHandle.Alloc(byteArray, GCHandleType.Pinned);
+            try
+            {
+                // Get a pointer to the start of the pinned byte array.
+                IntPtr pointer = handle.AddrOfPinnedObject();
+
+                // Add the offset to the pointer to get the correct starting address for the struct.
+                pointer = IntPtr.Add(pointer, offset);
+
+                // Marshal the data from the pointer into the struct.
+                return (T)Marshal.PtrToStructure(pointer, typeof(T));
+            }
+            finally
+            {
+                // IMPORTANT: Always free the handle in a finally block to unpin the array.
+                if (handle.IsAllocated)
+                {
+                    handle.Free();
+                }
+            }
+        }
+
+        // The key pointer resolution method
+
         public static object BYTEARRAY(IEnumerable<byte> bytes, ref int index, int Size)
         {
             var idx = index;
