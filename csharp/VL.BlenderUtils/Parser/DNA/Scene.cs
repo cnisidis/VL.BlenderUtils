@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 namespace VL.BlenderUtils.Parser.DNA
 {
     //https://github.com/blender/blender/blob/main/source/blender/makesdna/DNA_scene_types.h#L2004
-    [StructLayout(LayoutKind.Sequential)]
     public struct Scene
     {
         public ID id;

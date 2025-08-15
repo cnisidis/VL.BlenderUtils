@@ -19,9 +19,9 @@ namespace VL.BlenderUtils.Parser.DNA
         public IntPtr asset_data;
         // C++: char name[258];
         // Fixed-size C-style string.
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 258)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 66)]
         public string name;
-        public short flag;
+        public IDFlags flag;
         public int tag;
         public int us;
         public int icon_id;
@@ -91,6 +91,53 @@ namespace VL.BlenderUtils.Parser.DNA
         {
             return this.filepath;
         }
+    }
+
+    [System.Flags]
+    public enum IDFlags : ushort
+    {
+        
+        /// <summary>
+        /// Don't delete the data-block even if unused.
+        /// </summary>
+        ID_FLAG_FAKEUSER = 1 << 9,
+
+        /// <summary>
+        /// The data-block is a sub-data of another one.
+        /// Direct persistent references are not allowed.
+        /// </summary>
+        ID_FLAG_EMBEDDED_DATA = 1 << 10,
+
+        /// <summary>
+        /// Data-block is from a library and linked indirectly, with ID_TAG_INDIRECT
+        /// tag set. But the current .blend file also has a weak pointer to it that
+        /// we want to restore if possible, and silently drop if it's missing.
+        /// </summary>
+        ID_FLAG_INDIRECT_WEAK_LINK = 1 << 11,
+
+        /// <summary>
+        /// The data-block is a sub-data of another one, which is an override.
+        /// Note that this also applies to shape-keys, even though they are not 100% embedded data.
+        /// </summary>
+        ID_FLAG_EMBEDDED_DATA_LIB_OVERRIDE = 1 << 12,
+
+        /// <summary>
+        /// The override data-block appears to not be needed anymore after resync with linked data, but it
+        /// was kept around (because e.g. detected as user-edited).
+        /// </summary>
+        ID_FLAG_LIB_OVERRIDE_RESYNC_LEFTOVER = 1 << 13,
+
+        /// <summary>
+        /// This id was explicitly copied as part of a clipboard copy operation.
+        /// When reading the clipboard back, this can be used to check which ID's are
+        /// intended to be part of the clipboard, compared with ID's that were indirectly referenced.
+        ///
+        /// While the flag is typically cleared, a saved file may have this set for some data-blocks,
+        /// so it must be treated as dirty.
+        /// </summary>
+        ID_FLAG_CLIPBOARD_MARK = 1 << 14,
+
+        ID_FLAG_RESERVED = 0xFFFF
     }
 
 }

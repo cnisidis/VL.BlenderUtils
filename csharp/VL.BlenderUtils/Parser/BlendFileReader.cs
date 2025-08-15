@@ -3,9 +3,11 @@
 //https://github.com/blender/blender/blob/main/doc/blender_file_format/BlendFileReader.py
 
 using Stride.Core.Extensions;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-
+using VL.BlenderUtils.Parser.DNA;
 using VL.Lib.Collections;
+
 
 namespace VL.BlenderUtils.Parser
 {
@@ -19,17 +21,24 @@ namespace VL.BlenderUtils.Parser
         private bool FoundDnaBlock = false;
         DNACatalog Catalog;
 
+        public Scene Scene;
+        Camera Camera;
+        public RenderData R;
 
         private FileStream _fileStream;
         private BinaryReader _handle;
         public BlendFile()
         {
             blocks = new List<FileBlock>();
-
+            
         }
 
         public void OpenBlendFile(string blendFile)
         {
+            Scene = new();
+            Camera = new();
+            R = new RenderData();
+
             _fileStream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None);
             _handle = new BinaryReader(_fileStream) ;
            
@@ -62,11 +71,6 @@ namespace VL.BlenderUtils.Parser
                 }
 
                 blocks.Add(fileBlock);
-
-
-
-
-
             }
             else
             {
@@ -83,7 +87,32 @@ namespace VL.BlenderUtils.Parser
 
         public void Map()
         {
+            var scn = blocks.FindAll(x => x.Header.Code == "SC").FirstOrDefault();
+            var size = scn.Header.Size;
+            var offset = scn.Header.FileOffset;
             
+            var bytes = new byte[size];
+            _fileStream.Position = offset;
+            var total = _fileStream.Read(bytes, 0, (int)size);
+            Console.WriteLine($"{offset} {size} {total}");
+            Scene = Helpers.BytesToStruct<Scene>(bytes, 0);
+            
+            _fileStream.Seek(0, SeekOrigin.Begin);
+
+            var rnd = blocks.FindAll(x => x.Header.Code == "REND").FirstOrDefault();
+            size = scn.Header.Size;
+            offset = scn.Header.FileOffset;
+
+            bytes = new byte[size];
+            _fileStream.Position = offset;
+            total = _fileStream.Read(bytes, 0, (int)size);
+            Console.WriteLine($"{offset} {size} {total}");
+            R = Helpers.BytesToStruct<RenderData>(bytes, 0);
+            //this.RenderData = Marshal.PtrToStructure<RenderData>(Scene.r);
+
+            //Camera = Marshal.PtrToStructure<Camera>(Scene.camera);
+
+
         }
 
         public Spread<FileBlock> GetFileBlocks()
