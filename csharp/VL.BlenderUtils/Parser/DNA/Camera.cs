@@ -15,7 +15,7 @@ namespace VL.BlenderUtils.Parser.DNA
         public ID id;
         public IntPtr adt;
         [MarshalAs(UnmanagedType.I1)]
-        public byte type;
+        public CameraType type;
         [MarshalAs(UnmanagedType.I1)]
         public byte dtx;
         public short flag;
@@ -165,11 +165,12 @@ namespace VL.BlenderUtils.Parser.DNA
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4 * 4)]
         public float[] drw_normalmat;
     }
-    public enum CameraType
+    public enum CameraType : byte
     {
         Perspective = 0,
         Ortho = 1,
-        Panoramic = 2
+        Panoramic = 2, 
+        Custom  = 3,
     }
 
     public enum dtx

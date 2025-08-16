@@ -7,8 +7,10 @@ using VL.BlenderUtils.Parser.DNA;
 
 namespace VL.BlenderUtils.Parser.Managed
 {
-    internal interface IBlenderObject
+    public interface IBlenderObject
     {
         public ID GetID();
+
+        public string GetType();
     }
 }

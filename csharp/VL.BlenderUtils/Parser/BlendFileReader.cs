@@ -7,8 +7,10 @@ using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using VL.BlenderUtils.Parser.DNA;
+using VL.BlenderUtils.Parser.Managed;
 using VL.Lib.Collections;
-
+using VL.BlenderUtils.Parser.Managed;
+using VL.Core;
 
 namespace VL.BlenderUtils.Parser
 {
@@ -17,13 +19,16 @@ namespace VL.BlenderUtils.Parser
 
 
         public Header header { get; set; }
-        List<FileBlock> blocks { get; set; }
+        //List<FileBlock> blocks { get; set; }
+        public List<IBlenderObject> Objects { get; set; }
 
         private bool FoundDnaBlock = false;
         DNACatalog Catalog;
 
-        public Scene Scene;
-        public Camera Camera;
+        
+
+        //public Scene Scene;
+        //public Camera Camera;
         public RenderData R;
 
         private FileStream _fileStream;
@@ -31,17 +36,18 @@ namespace VL.BlenderUtils.Parser
         private Dictionary<IntPtr, FileBlock> Blocks;
         public BlendFile()
         {
-            blocks = new List<FileBlock>();
-            Blocks = new Dictionary<IntPtr, FileBlock>();
-
+            //blocks = new List<FileBlock>();
+            
+            Objects = new List<IBlenderObject>();
 
         }
 
         public void OpenBlendFile(string blendFile)
         {
-            Scene = new();
-            Camera = new();
+            //Scene = new();
+            //Camera = new();
             R = new RenderData();
+            Blocks = new Dictionary<IntPtr, FileBlock>();
 
             _fileStream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None);
             _handle = new BinaryReader(_fileStream) ;
@@ -68,13 +74,22 @@ namespace VL.BlenderUtils.Parser
                     else
                         fileBlock.Header.Skip(_handle);
 
-                    blocks.Add(fileBlock);
-                    Blocks.Add(new IntPtr((long)fileBlock.Header.OldAddress), fileBlock);
+                    //blocks.Add(fileBlock);
+                    try
+                    {
+                        if(fileBlock.Header.Code.Contains("CA")) { Console.WriteLine($"{fileBlock.Header.FileOffset} {fileBlock.Header.OldAddress}"); }
+                        Blocks.Add(new IntPtr((long)fileBlock.Header.OldAddress), fileBlock);
+                    }
+                    catch
+                    {
+                        Console.WriteLine(fileBlock.Header.OldAddress);
+                    }
                     fileBlock = new FileBlock(_handle, this);
 
 
                 }
                 //END FileBlock
+
                 //blocks.Add(fileBlock);
             }
             else
@@ -92,6 +107,35 @@ namespace VL.BlenderUtils.Parser
 
         public void Map()
         {
+            var _scnenes = Blocks.Values.ToList().FindAll(x=>x.Header.Code == "SC");
+            foreach(var _scn in _scnenes)
+            {
+                for (int i = 0; i < _scn.Header.Count; i++)
+                {
+
+                    var bytes = GetFileBlockBytesByOffset(_scn.Header);
+                    var sc = new SceneObejct(Helpers.BytesToStruct<Scene>(bytes, 0), this);
+                    Objects.Add(sc);
+                    _fileStream.Seek(0, SeekOrigin.Begin);
+                }
+            }
+            
+            _fileStream.Seek(0, SeekOrigin.Begin);
+            var _cameras = Blocks.Values.ToList().FindAll(x => x.Header.Code == "CA");
+            foreach(var _cam in _cameras)
+            {
+                for (int i = 0; i < _cam.Header.Count; i++)
+                {
+
+                    var bytes = GetFileBlockBytesByOffset(_cam.Header);
+                    var cam = new CameraObject(Helpers.BytesToStruct<Camera>(bytes, 0), this);
+                    Objects.Add(cam);
+                    _fileStream.Seek(0, SeekOrigin.Begin);
+                }
+            }
+            
+            _fileStream.Seek(0, SeekOrigin.Begin);
+            /*
             var scn = blocks.FindAll(x => x.Header.Code == "SC").FirstOrDefault();
             var size = scn.Header.Size;
             var offset = scn.Header.FileOffset;
@@ -116,6 +160,18 @@ namespace VL.BlenderUtils.Parser
             Console.WriteLine($"{offset} {size} {total}");
             R = Helpers.BytesToStruct<RenderData>(bytes, 0);
             //this.RenderData = Marshal.PtrToStructure<RenderData>(Scene.r);
+            */
+        }
+
+        public byte[] GetFileBlockBytesByOffset(FileBlockHeader header) 
+        {
+            var size = header.Size;
+            var offset = header.FileOffset;
+            var bytes = new byte[size];
+            _fileStream.Position = offset;
+            _fileStream.Read(bytes, 0, (int)size);
+            _fileStream.Seek(0, SeekOrigin.Begin);
+            return bytes;
 
         }
 
@@ -172,7 +228,7 @@ namespace VL.BlenderUtils.Parser
 
         public Spread<FileBlock> GetFileBlocks()
         {
-            return blocks.ToSpread();
+            return Blocks.Values.ToSpread();
         }
 
         public DNACatalog GetDNACatalog()
@@ -182,8 +238,19 @@ namespace VL.BlenderUtils.Parser
             else
                 return null;
         }
+        public IEnumerable<IBlenderObject> GetObjects()
+        {
+            return this.Objects;
+        }
+        public Spread<SceneObejct> GetScenes()
+        {
+            return Objects.OfType<SceneObejct>().ToSpread();
+        }
 
-        
+        public Spread<CameraObject> GetCameras()
+        {
+            return Objects.OfType<CameraObject>().ToSpread();
+        }
 
         public void Dispose()
         {
@@ -307,7 +374,7 @@ namespace VL.BlenderUtils.Parser
                     FileOffset = handle.BaseStream.Position;
                 }
 
-                Console.WriteLine("Found blend-file-block-fileheader {0:G} {1:G}", Code, FileOffset);
+                //Console.WriteLine("Found blend-file-block-fileheader {0:G} {1:G}", Code, FileOffset);
             }
 
             public void Skip(BinaryReader handle)
