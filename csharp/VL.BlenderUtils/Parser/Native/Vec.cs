@@ -5,15 +5,14 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VL.BlenderUtils.Parser.DNA
+namespace VL.BlenderUtils.Parser.Native
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct CustomData_MeshMasks
+    public struct rctf
     {
-        public ulong vmask;
-        public ulong emask;
-        public ulong fmask;
-        public ulong pmask;
-        public ulong lmask;
+        public float xmin;
+        public float xmax;
+        public float ymin;
+        public float ymax;
     }
 }

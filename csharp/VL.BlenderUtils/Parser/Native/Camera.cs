@@ -1,7 +1,7 @@
 ﻿
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-namespace VL.BlenderUtils.Parser.DNA
+namespace VL.BlenderUtils.Parser.Native
 {
     //https://github.com/blender/blender/blob/main/source/blender/makesdna/DNA_camera_types.h
 
@@ -12,16 +12,18 @@ namespace VL.BlenderUtils.Parser.DNA
     [StructLayout(LayoutKind.Sequential)]
     public struct Camera
     {
+        
         public ID id;
         public IntPtr adt;
-        [MarshalAs(UnmanagedType.I1)]
+        [MarshalAs(UnmanagedType.I1)]    
         public CameraType type;
-        [MarshalAs(UnmanagedType.I1)]
+        
         public byte dtx;
-        public short flag;
+        
+        public CameraFlags flag;
         public float passepartalpha;
-        public float clip_start;
-        public float clip_end;
+        public float clip_start, clip_end;
+       
         public float lens;
         public float ortho_scale;
         public float drawsize;
@@ -31,7 +33,7 @@ namespace VL.BlenderUtils.Parser.DNA
         public float shifty;
         public float dof_distance;
         [MarshalAs(UnmanagedType.I1)]
-        public byte sensor_fit;
+        public SensorFit sensor_fit;
         [MarshalAs(UnmanagedType.I1)]
         public byte panorama_type;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
@@ -194,11 +196,27 @@ namespace VL.BlenderUtils.Parser.DNA
         ShowPassepartout = 1 << 2
     }
 
-    public enum SensorFit
+    public enum SensorFit:byte
     {
         Auto = 0,
         Horizontal = 1,
         Vertical = 2
+    }
+
+    [Flags]
+    public enum CameraFlags : short
+    {
+        CAM_SHOWLIMITS = (1 << 0),
+        CAM_SHOWMIST = (1 << 1),
+        CAM_SHOWPASSEPARTOUT = (1 << 2),
+        CAM_SHOW_SAFE_MARGINS = (1 << 3),
+        CAM_SHOWNAME = (1 << 4),
+        CAM_ANGLETOGGLE = (1 << 5),
+        CAM_DS_EXPAND = (1 << 6),
+        // CAM_PANORAMA = (1 << 7), // Deprecated flag from older DNA versions.
+        CAM_SHOWSENSOR = (1 << 8),
+        CAM_SHOW_SAFE_CENTER = (1 << 9),
+        CAM_SHOW_BG_IMAGE = (1 << 10),
     }
 
 }

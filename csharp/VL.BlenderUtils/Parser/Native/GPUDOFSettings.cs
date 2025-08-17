@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VL.BlenderUtils.Parser.DNA
+namespace VL.BlenderUtils.Parser.Native
 {
     using System.Runtime.InteropServices;
 

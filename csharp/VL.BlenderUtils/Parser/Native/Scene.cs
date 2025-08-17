@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 
 
-namespace VL.BlenderUtils.Parser.DNA
+namespace VL.BlenderUtils.Parser.Native
 {
     //https://github.com/blender/blender/blob/main/source/blender/makesdna/DNA_scene_types.h#L2004
     public struct Scene

@@ -2,7 +2,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace VL.BlenderUtils.Parser.DNA
+namespace VL.BlenderUtils.Parser.Native
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct LinkData

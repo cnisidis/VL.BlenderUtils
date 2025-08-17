@@ -1,13 +1,14 @@
 ﻿
 using System.Runtime.InteropServices;
 using System;
+using System.Text;
 
-namespace VL.BlenderUtils.Parser.DNA
+namespace VL.BlenderUtils.Parser.Native
 {
 
     //https://github.com/blender/blender/blob/main/source/blender/makesdna/DNA_ID.h#L400
     
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct ID
     {
         
@@ -19,6 +20,8 @@ namespace VL.BlenderUtils.Parser.DNA
         public IntPtr asset_data;
         // C++: char name[258];
         // Fixed-size C-style string.
+        //[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 66)] //66 works 
+        //public string name;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 66)]
         public string name;
         public IDFlags flag;
@@ -40,10 +43,15 @@ namespace VL.BlenderUtils.Parser.DNA
         // C++: struct ID_Runtime runtime;
         // Note: You would need to define this struct as well.
         public ID_Runtime runtime;
+
+        public string GetName()
+        {
+            return this.name;
+        }
     }
 
     // C++: typedef struct ID_Runtime
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct ID_Runtime
     {
         // C++: ID_Runtime_Remap remap;
@@ -58,7 +66,7 @@ namespace VL.BlenderUtils.Parser.DNA
     }
 
     // C++: typedef struct ID_Runtime_Remap
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack =1)]
     public struct ID_Runtime_Remap
     {
         

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using VL.BlenderUtils.Parser.DNA;
+using VL.BlenderUtils.Parser.Native;
 
 namespace VL.BlenderUtils.Parser.Managed
 {
@@ -11,6 +11,6 @@ namespace VL.BlenderUtils.Parser.Managed
     {
         public ID GetID();
 
-        public string GetType();
+        public ObjectType GetType();
     }
 }
