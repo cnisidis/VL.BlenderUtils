@@ -2,15 +2,13 @@
 
 //https://github.com/blender/blender/blob/main/doc/blender_file_format/BlendFileReader.py
 
-using Stride.Core.Extensions;
-using System.Reflection.Metadata;
+
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
-using VL.BlenderUtils.Parser.DNA;
+using VL.BlenderUtils.Parser.Native;
 using VL.BlenderUtils.Parser.Managed;
 using VL.Lib.Collections;
-using VL.BlenderUtils.Parser.Managed;
-using VL.Core;
+using VL.BlenderUtils.Parser.DNA;
+using System.CodeDom;
 
 namespace VL.BlenderUtils.Parser
 {
@@ -20,34 +18,30 @@ namespace VL.BlenderUtils.Parser
 
         public Header header { get; set; }
         //List<FileBlock> blocks { get; set; }
-        public List<IBlenderObject> Objects { get; set; }
+        public List<BlenderObjectBase> Objects { get; set; }
+        public List<Managed.Scene> Scenes { get; set; }
+        
 
         private bool FoundDnaBlock = false;
         DNACatalog Catalog;
 
-        
-
-        //public Scene Scene;
-        //public Camera Camera;
-        public RenderData R;
-
         private FileStream _fileStream;
         private BinaryReader _handle;
         private Dictionary<IntPtr, FileBlock> Blocks;
+
+        
         public BlendFile()
         {
             //blocks = new List<FileBlock>();
             
-            Objects = new List<IBlenderObject>();
-
+            Objects = new List<BlenderObjectBase>();
+            Blocks = new Dictionary<IntPtr, FileBlock>();
+            Scenes = new();
         }
 
         public void OpenBlendFile(string blendFile)
         {
-            //Scene = new();
-            //Camera = new();
-            R = new RenderData();
-            Blocks = new Dictionary<IntPtr, FileBlock>();
+            
 
             _fileStream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None);
             _handle = new BinaryReader(_fileStream) ;
@@ -90,7 +84,7 @@ namespace VL.BlenderUtils.Parser
                 }
                 //END FileBlock
 
-                //blocks.Add(fileBlock);
+                Blocks.Add(new IntPtr((long)fileBlock.Header.OldAddress), fileBlock);
             }
             else
             {
@@ -100,7 +94,7 @@ namespace VL.BlenderUtils.Parser
                 Map();
                 
             }
-
+            Console.WriteLine(Marshal.SizeOf<ID>().ToString());
             Dispose();
             
         }
@@ -114,53 +108,38 @@ namespace VL.BlenderUtils.Parser
                 {
 
                     var bytes = GetFileBlockBytesByOffset(_scn.Header);
-                    var sc = new SceneObejct(Helpers.BytesToStruct<Scene>(bytes, 0), this);
-                    Objects.Add(sc);
+                    var sc = new Managed.Scene(Helpers.BytesToStruct<Native.Scene>(bytes, 0), this);
+                    Scenes.Add(sc);
                     _fileStream.Seek(0, SeekOrigin.Begin);
                 }
             }
             
             _fileStream.Seek(0, SeekOrigin.Begin);
-            var _cameras = Blocks.Values.ToList().FindAll(x => x.Header.Code == "CA");
-            foreach(var _cam in _cameras)
+            
+            var _objs = Blocks.Values.ToList().FindAll(x => x.Header.Code == "OB");
+            foreach (var _obj in _objs)
             {
-                for (int i = 0; i < _cam.Header.Count; i++)
-                {
-
-                    var bytes = GetFileBlockBytesByOffset(_cam.Header);
-                    var cam = new CameraObject(Helpers.BytesToStruct<Camera>(bytes, 0), this);
-                    Objects.Add(cam);
-                    _fileStream.Seek(0, SeekOrigin.Begin);
-                }
+                var nativeObj = ResolvePtr<Native.Object>(new IntPtr((long)_obj.Header.OldAddress));
+                var obj = (BlenderObjectBase)CreateManagedObject(nativeObj);
+                Objects.Add(obj);
             }
-            
-            _fileStream.Seek(0, SeekOrigin.Begin);
-            /*
-            var scn = blocks.FindAll(x => x.Header.Code == "SC").FirstOrDefault();
-            var size = scn.Header.Size;
-            var offset = scn.Header.FileOffset;
-            
-            var bytes = new byte[size];
-            _fileStream.Position = offset;
-            var total = _fileStream.Read(bytes, 0, (int)size);
-            Console.WriteLine($"{offset} {size} {total}");
-            Scene = Helpers.BytesToStruct<Scene>(bytes, 0);
-
-            Camera = ResolvePtr<Camera>(Scene.camera);
 
             _fileStream.Seek(0, SeekOrigin.Begin);
+           
+        }
 
-            var rnd = blocks.FindAll(x => x.Header.Code == "REND").FirstOrDefault();
-            size = scn.Header.Size;
-            offset = scn.Header.FileOffset;
-
-            bytes = new byte[size];
-            _fileStream.Position = offset;
-            total = _fileStream.Read(bytes, 0, (int)size);
-            Console.WriteLine($"{offset} {size} {total}");
-            R = Helpers.BytesToStruct<RenderData>(bytes, 0);
-            //this.RenderData = Marshal.PtrToStructure<RenderData>(Scene.r);
-            */
+        public dynamic CreateManagedObject(Native.Object nativeObject)
+        {
+            var objectType = (ObjectType)nativeObject.type;
+            switch (objectType)
+            {
+                case ObjectType.OB_CAMERA:
+                    return new BlenderObject<Camera>(nativeObject, this);
+                
+                default:
+                    return null ;
+                    //throw new InvalidOperationException($"Cannot create a managed object for unknown type: {objectType}");
+            }
         }
 
         public byte[] GetFileBlockBytesByOffset(FileBlockHeader header) 
@@ -238,18 +217,18 @@ namespace VL.BlenderUtils.Parser
             else
                 return null;
         }
-        public IEnumerable<IBlenderObject> GetObjects()
+        public IEnumerable<BlenderObjectBase> GetObjects()
         {
             return this.Objects;
         }
-        public Spread<SceneObejct> GetScenes()
+        public Spread<Managed.Scene> GetScenes()
         {
-            return Objects.OfType<SceneObejct>().ToSpread();
+            return this.Scenes.ToSpread();
         }
 
-        public Spread<CameraObject> GetCameras()
+        public Spread<BlenderObject<Camera>> GetCameras()
         {
-            return Objects.OfType<CameraObject>().ToSpread();
+            return Objects.OfType<BlenderObject<Camera>>().ToSpread();
         }
 
         public void Dispose()
@@ -394,286 +373,6 @@ namespace VL.BlenderUtils.Parser
 
         }
 
-        /// <summary>
-        /// DNACatalog is a catalog of all information in the DNA1 file-block
-        /// </summary>
-        public partial class DNACatalog
-        {
-            public List<string> Names;
-            List<DNAType> Types;
-            public List<DNAStructure> Structures;
-            public DNACatalog(Header header, BinaryReader handle)
-            {
-                Names = new List<string>();
-                Types = new List<DNAType>();
-                Structures = new List<DNAStructure>();
-
-
-                var startOffset = handle.BaseStream.Position;
-                var SDNA = Reader.ReadString(handle, 4);
-                if (SDNA != "SDNA")
-                {
-                    Console.WriteLine("SDNA tag is not parsed properly - abodring");
-                    return;
-                }
-
-                //names
-                var NAME = Reader.ReadString(handle, 4);
-                if (NAME != "NAME")
-                {
-                    Console.WriteLine("NAME tag is not parsed properly - abodring");
-                    return;
-                }
-                var numberOfNames = Reader.Read(ReaderType.UI, handle, header);
-                Console.WriteLine("Building {0:G} NAMES", numberOfNames);
-
-                //Potential reason that NAMES are not offseted properly -> https://github.com/blender/blender/blob/main/source/blender/makesdna/intern/dna_genfile.cc#L377C23-L377C28
-                /* "float gravity [3]" was parsed wrong giving both "gravity" and
-                 * "[3]"  members. we rename "[3]", and later set the type of
-                 * "gravity" to "void" so the offsets work out correct */
-
-                for (int i = 0; i < numberOfNames; i++)
-                {
-                    var name = Reader.ReadString(handle);
-
-                    if (name.IndexOf("[") == 0 && Regex.IsMatch(name, @"(\[+\d+\])"))
-                    {
-                        Console.WriteLine("{0:G} is not parsed properly", name);
-                        var newName = Names[i - 1];
-                        name = newName + name;
-
-                    }
-                    Names.Add(name);
-                }
-
-                Reader.AlignAlt(handle, startOffset);
-
-                var TYPE = Reader.ReadString(handle, 4);
-
-                if (TYPE != "TYPE")
-                {
-                    Console.WriteLine("Error on Parsing Types - Alignment is wrong: {0:G}", TYPE);
-                    return;
-                }
-
-
-
-                var numberOfTypes = Reader.Read(ReaderType.UI, handle, header);
-                Console.WriteLine("Building {0:G} TYPES", numberOfTypes);
-
-                for (int i = 0; i < numberOfTypes; i++)
-                {
-                    var type = Reader.ReadString(handle);
-                    //Create new DNAType
-                    var dnaType = new DNAType(type);
-                    Types.Add(dnaType);
-                }
-                Reader.AlignAlt(handle, startOffset);
-
-                //types lengths
-                var TLEN = Reader.ReadString(handle, 4);
-                Console.WriteLine("Building {0:G} TYPE-LENGTHs", numberOfTypes);
-
-                for (int i = 0; i < numberOfTypes; i++)
-                {
-                    var length = Reader.Read(ReaderType.US, handle, header);
-                    //Get dnaType and set its size
-                    Types[i].Size = length;
-
-                }
-                Reader.AlignAlt(handle, startOffset);
-
-                //structs
-                var STRC = Reader.ReadString(handle, 4);
-                if (STRC != "STRC")
-                {
-                    return;
-                }
-                var numberOfStructs = Reader.Read(ReaderType.UI, handle, header);
-                Console.WriteLine("Building {0:G} STRUCTS", numberOfStructs);
-
-
-                for (int structureIndex = 0; structureIndex < numberOfStructs; structureIndex++)
-                {
-
-                    var type = Reader.Read(ReaderType.US, handle, header);
-                    string typeName = Types[type].Name;
-
-                    DNAStructure structure = new DNAStructure
-                    {
-                        TypeName = typeName
-                    };
-
-                    var numberOfFields = Reader.Read(ReaderType.US, handle, header);
-
-
-                    for (int fieldIndex = 0; fieldIndex < numberOfFields; fieldIndex++)
-                    {
-                        var fTypeIndex = Reader.Read(ReaderType.US, handle, header);
-
-                        var fNameIndex = Reader.Read(ReaderType.US, handle, header);
-
-                        var fType = Types[fTypeIndex];
-                        var fName = Names[fNameIndex];
-
-
-
-                        var field = new DNAField(fType.Name, fName);
-                        structure.Fields.Add(field);
-
-                    }
-
-                    Structures.Add(structure);
-                }
-
-
-            }
-
-            public Spread<DNAType> GetTypes()
-            {
-                return Types.ToSpread();
-            }
-
-            public Spread<DNAStructure> GetStructures()
-            {
-                return Structures.ToSpread();
-            }
-        }
-
-        public class DNAName
-        {
-            public string Name { get; }
-            public DNAName(string name)
-            {
-                this.Name = name;
-            }
-
-            public string AsReference(string parent)
-            {
-                string result=string.Empty;
-
-                if (parent == null)
-                {
-                    return "";
-                }
-                else return parent + ".";
-            }
-
-            public string ShortName()
-            {
-                var result = this.Name;
-                result = result.Replace("*", "");
-                result = result.Replace("(", "");
-                result = result.Replace(")", "");
-                var index = result.ToCharArray().IndexOf('[');
-                if (index != -1)
-                {
-                    result = new string(result.ToCharArray().Take(index).ToArray());
-                }
-
-                return result;
-            }
-
-            public bool IsPointer()
-            {
-                return Name.IndexOf('*') > -1;
-            }
-
-            public bool IsMethodPointer()
-            {
-                return Name.Contains("(*");
-            }
-
-            public int ArraySize()
-            {
-                var result = 1;
-
-                var tmp = Name;
-                var idx = Name.IndexOf('[');
-
-                while (idx != -1)
-                {
-                    var idx2 = tmp.IndexOf(']');
-                    var mult = int.Parse(new string((tmp.Skip(idx + 1).Take(idx2).ToArray())));
-                    result *= mult;
-                    tmp = new string(tmp.Skip(idx2 + 1).ToArray());
-                    idx = tmp.IndexOf('[');
-                }
-
-
-                return result;
-            }
-
-        }
-
-        public class DNAType
-        {
-            public string Name;
-            public int Size;
-            public DNAStructure Structure;
-
-            public DNAType(string name)
-            {
-                this.Name = name;
-                this.Structure = null;
-            }
-
-            public void ToVLType()
-            {
-
-            }
-        }
-
-
-
-        public class DNAStructure
-        {
-
-            public string TypeName;
-            public List<DNAField> Fields { get; set; } = new();
-
-
-            public void ToString(out string Result)
-            {
-                Result = this.Fields.Count().ToString();
-            }
-
-            public void Split(out string Name, out Spread<DNAField> Fields)
-            {
-                Name = TypeName;
-                Fields = this.Fields.ToSpread();
-            }
-        }
-
-        /// <summary>
-        /// DNAField is a coupled DNAType and DNAName.
-        /// </summary>
-        public class DNAField
-        {
-            public string Type;
-            public string Name;
-
-
-            public DNAField(string Type, string Name)
-            {
-                this.Type = Type;
-                this.Name = Name;
-
-            }
-
-
-            public string ToString()
-            {
-                return this.Name + this.Type;
-            }
-
-
-            public void Split(out string Name, out string Type)
-            {
-                Name = this.Name;
-                Type = this.Type;
-            }
-        }
 
     }
 }
