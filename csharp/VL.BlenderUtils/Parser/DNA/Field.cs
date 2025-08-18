@@ -7,6 +7,26 @@ using System.Threading.Tasks;
 
 namespace VL.BlenderUtils.Parser.DNA
 {
+    public enum FieldType
+    {
+        Unknown,
+        Pointer,
+        FunctionPointer,
+        ValueType,
+        StructType,
+        Array,
+        MultiDimArray,
+    }
+
+    public struct ResolvedTypeInfo
+    {
+        public FieldType FieldType;
+        public System.Type SystemType;
+        public List<int> ArraySizes;
+        public int PointerLevel;
+        public bool IsMultiDimArray;
+        public int CalculatedSize;
+    }
 
     /// <summary>
     /// DNAField is a coupled DNAType and DNAName.
@@ -15,15 +35,36 @@ namespace VL.BlenderUtils.Parser.DNA
     {
         public DNAType Type;
         public string Name;
-        public FieldType InnerType;
+        
         public int Size;
+
+        // Resolved properties
+        public FieldType InnerType { get; private set; }
+        public System.Type SystemType { get; private set; }
+        public List<int> ArraySizes { get; private set; } = new List<int>();
+        public int PointerLevel { get; private set; }
+        public bool IsMultiDimArray { get; private set; }
+        public int CalculatedSize { get; private set; } // The new property.
+
+        public void Resolve(Dictionary<string, DNAType> allStructs)
+        {
+            var resolver = new DNATypeResolver(allStructs);
+            var resolvedInfo = resolver.Resolve(this.Name, this.Type.Name);
+
+            this.InnerType = resolvedInfo.FieldType;
+            this.SystemType = resolvedInfo.SystemType;
+            this.ArraySizes = resolvedInfo.ArraySizes;
+            this.PointerLevel = resolvedInfo.PointerLevel;
+            this.IsMultiDimArray = resolvedInfo.IsMultiDimArray;
+            this.CalculatedSize = resolvedInfo.CalculatedSize;
+        }
 
 
         public DNAField(string Name, DNAType Type)
         {
             this.Type = Type;
             this.Name = Name;
-            this.ResolveField();
+            
         }
 
 
@@ -38,27 +79,7 @@ namespace VL.BlenderUtils.Parser.DNA
             Name = this.Name;
             Type = this.Type;
         }
-        private void ResolveField()
-        {
-
-            //define type
-            if (Name.IndexOf('*') > -1) InnerType = FieldType.Pointer ;
-            else if (Name.Contains("(*")) InnerType = FieldType.Method;
-            else if (Name.Contains("[")) 
-            {
-                InnerType = FieldType.Array;
-                //check how many arrays it holds
-                //check the DNAType.Name
-            }
-            else
-            {
-                if (Type.Name == "char") InnerType = FieldType.Byte;
-                else if (Type.Name == "short" || Type.Name == "int") InnerType = FieldType.Int;
-                else if (Type.Name == "float") InnerType = FieldType.Float;
-                else InnerType = FieldType.Struct;
-            }
-        }
-
+        
         public dynamic Cast()
         {
             return null;
@@ -80,20 +101,9 @@ namespace VL.BlenderUtils.Parser.DNA
         }
     }
 
-    public enum FieldType
-    {
-        Pointer,
-        Method,
-        String, 
-        Array,
-        Float,
-        Int,
-        Byte,
-        Matrix,
-        Struct
-
-    }
-
-
     
+
+
+
+
 }

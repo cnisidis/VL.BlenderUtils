@@ -9,6 +9,7 @@ using VL.BlenderUtils.Parser.Managed;
 using VL.Lib.Collections;
 using VL.BlenderUtils.Parser.DNA;
 using System.CodeDom;
+using System.Text;
 
 namespace VL.BlenderUtils.Parser
 {
@@ -91,6 +92,7 @@ namespace VL.BlenderUtils.Parser
                 throw new NotImplementedException();
             }
             {
+                
                 Map();
                 
             }
@@ -101,16 +103,23 @@ namespace VL.BlenderUtils.Parser
 
         public void Map()
         {
+            
             var _scnenes = Blocks.Values.ToList().FindAll(x=>x.Header.Code == "SC");
+            
             foreach(var _scn in _scnenes)
             {
+                var offset = 0;
                 for (int i = 0; i < _scn.Header.Count; i++)
                 {
-
+                    var depth = 0;
                     var bytes = GetFileBlockBytesByOffset(_scn.Header);
-                    var sc = new Managed.Scene(Helpers.BytesToStruct<Native.Scene>(bytes, 0), this);
+                    //var sc = new Managed.Scene(Helpers.BytesToStruct<Native.Scene>(bytes, 0), this);
+                    
+                    var _sc = ReadFromBytes<Native.Scene>(bytes.Skip(offset).ToArray(), Catalog, ref depth);
+                    var sc = new Managed.Scene(_sc, this);
+                    Console.WriteLine(_sc.camera);
                     Scenes.Add(sc);
-                    _fileStream.Seek(0, SeekOrigin.Begin);
+                    //offset = GetDNACatalog().Structures.Find(x => x.TypeName == "Scene").Size;
                 }
             }
             
@@ -153,6 +162,131 @@ namespace VL.BlenderUtils.Parser
             return bytes;
 
         }
+        /*
+                 * Example --> first field in native class is ID
+                 * we lookup in the DNACatalog.Structures to find the ID,
+                 * we get the Size of the ID and read the bytes with a Helper Function in order to return an ID,
+                 * the offset must be set then to the size of the initial object.
+        */
+        public static T ReadFromBytes<T>(byte[] bytes, DNACatalog DNACat, ref int depth) where T : new()
+        {
+            
+            //Get the DNA structure which correspond to the native class/struct
+            var nativeClassName = typeof(T).Name;
+            Console.WriteLine(nativeClassName);
+            DNAStructure dnaStruct = DNACat.Structures.Find(x => x.TypeName == nativeClassName);
+            var dnaStructFields = dnaStruct.Fields;
+
+            //Create new istance of the output class/struct
+            T result = new T();
+            var offset = 0;
+            var size = dnaStruct.Size;
+            
+            //Iterate through all the Fields of the native struct
+            foreach (var field in typeof(T).GetFields())
+            {
+                //Lookup the dna structures collection and locate the exact dna field that matches the exact name of the native class fields
+                var dnaEquivalentField = dnaStruct.Fields.Find(x => x.GetShortName() == field.Name);
+                //if the dna equivalent is not null then
+                //1. Construct the object
+                //  a. Get the size of the dna equivalent (Calculated Size)
+                //  b. Set the size of the bytes.Take(..)
+                //  c. Return the Object 
+                //  d. proceed next
+
+                
+                if (dnaEquivalentField != null)
+                {
+                    /*
+                    Console.WriteLine($"{dnaEquivalentField.GetShortName()} " + $"--> {field.Name} of type {field.FieldType} " +
+                        $"with size of {dnaEquivalentField.CalculatedSize}");
+                    */
+                    
+                    var fieldSize = dnaEquivalentField.CalculatedSize;
+                    var type = dnaEquivalentField.SystemType;
+                    dynamic value = null;
+                    switch (dnaEquivalentField.InnerType)
+                    {
+                        case FieldType.Pointer:
+                            value=ReadPrimitiveType(bytes, offset, type, fieldSize);
+                            
+                            break;
+                        case FieldType.ValueType:
+                            value=ReadPrimitiveType(bytes, offset, field.FieldType, fieldSize);
+                            break;
+
+                        case FieldType.Array:
+                            if (dnaEquivalentField.SystemType == typeof(string)) value = ReadPrimitiveType(bytes, offset, field.FieldType, fieldSize);
+                            
+                                break;
+
+                        case FieldType.StructType:
+                            try
+                            {
+                                if (field.FieldType == typeof(ID)) 
+                                { 
+                                    value = (ID)ReadFromBytes<ID>(bytes.Skip(offset).Take(dnaEquivalentField.CalculatedSize).ToArray(), DNACat, ref depth);
+                                }
+                                else if (field.FieldType == typeof(ID_Runtime))
+                                {
+                                    value = (ID_Runtime)ReadFromBytes<Native.ID_Runtime>(bytes.Skip(offset).Take(dnaEquivalentField.CalculatedSize).ToArray(), DNACat, ref depth);
+                                }
+                            }
+                            catch (Exception ex) 
+                            {
+                                Console.WriteLine(ex.Message);
+                            }
+                            
+                            break;
+
+                    }
+                    offset += dnaEquivalentField.Size;
+
+
+                    try
+                    {
+                        Console.WriteLine($"D:{depth} :: {field.Name} -> {value.ToString()}");
+                        field.SetValue(result, value);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                        Console.WriteLine($"D:{depth} :: {field.Name} {field.FieldType} {dnaEquivalentField.Name} {dnaEquivalentField.InnerType} {dnaEquivalentField.SystemType}");
+
+                    }
+
+                }
+
+                else
+                {
+                    Console.WriteLine($"D:{depth} !!! ---> '{field.Name}' can not be matched!");
+                }
+
+            }
+            Console.WriteLine($"Native Auto Generated Class {result.GetType()}");
+            depth += 1;
+            return result;
+
+        }
+
+        private static dynamic ReadPrimitiveType(byte[] bytes, int offset, System.Type type, int size)
+        {
+            if (type == typeof(int) || type == typeof(Int32)) return BitConverter.ToInt32(bytes, offset);
+            else if (type == typeof(uint)) return BitConverter.ToUInt32(bytes, offset);
+            else if(type == typeof(float) || type == typeof(Single)) return BitConverter.ToSingle(bytes, offset);
+            else if(type == typeof(short)) return BitConverter.ToInt16(bytes, offset);
+            else if(type == typeof(ushort)) return BitConverter.ToUInt16(bytes, offset);
+            else if(type == typeof(ulong)) return BitConverter.ToUInt64(bytes, offset);
+            else if(type == typeof(long)) return BitConverter.ToInt64(bytes, offset);
+            else if(type == typeof(IntPtr)) return (IntPtr)BitConverter.ToInt64(bytes, offset);
+            else if(type == typeof(string)) return Encoding.UTF8.GetString(bytes, offset, size).TrimEnd('\0');
+
+            else
+                // Add more primitive types as needed.
+                return null;
+        }
+
+        
 
         /// <summary>
         /// Lazily resolves a pointer from a data block and deserializes the
@@ -205,6 +339,8 @@ namespace VL.BlenderUtils.Parser
             return result;
         }
 
+        
+
         public Spread<FileBlock> GetFileBlocks()
         {
             return Blocks.Values.ToSpread();
@@ -235,7 +371,7 @@ namespace VL.BlenderUtils.Parser
         {
             _fileStream.Dispose();
             _handle.Dispose();
-            Console.WriteLine("--Parser Was Propserly Disposed");
+            Console.WriteLine("--Parser Disposed--");
         }
 
         /// <summary>

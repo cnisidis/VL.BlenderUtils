@@ -11,6 +11,7 @@ namespace VL.BlenderUtils.Parser.DNA
     {
 
         public string TypeName;
+        public int Size;
         public List<DNAField> Fields { get; set; } = new();
 
         public  DNAStructure(string Name)
@@ -22,10 +23,11 @@ namespace VL.BlenderUtils.Parser.DNA
             Result = this.Fields.Count().ToString();
         }
 
-        public void Split(out string Name, out Spread<DNAField> Fields)
+        public void Split(out string Name, out Spread<DNAField> Fields, out int Size)
         {
             Name = TypeName;
             Fields = this.Fields.ToSpread();
+            Size = this.Size;
         }
     }
 }

@@ -136,6 +136,8 @@ namespace VL.BlenderUtils.Parser.DNA
                 var numberOfFields = Reader.Read(ReaderType.US, _reader, _header);
 
                 var structure = new DNAStructure(typeName);
+                structure.Size = dnaTypes[typeName].Size;
+
                 for (int fieldIndex = 0; fieldIndex < numberOfFields; fieldIndex++)
                 {
                     var fTypeIndex = Reader.Read(ReaderType.US, _reader, _header);
@@ -148,12 +150,14 @@ namespace VL.BlenderUtils.Parser.DNA
                     
 
                     var field = new DNAField(fName, fType);
+                    field.Resolve(dnaTypes);
                     structure.Fields.Add(field);
 
                 }
                 
                 Structures.Add(structure);
             }
+            
 
             Console.WriteLine("Built DNA Catalog Succesfully");
         }

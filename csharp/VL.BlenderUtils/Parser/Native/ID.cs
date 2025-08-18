@@ -2,6 +2,8 @@
 using System.Runtime.InteropServices;
 using System;
 using System.Text;
+using VL.BlenderUtils.Parser.DNA;
+using System.Reflection;
 
 namespace VL.BlenderUtils.Parser.Native
 {
@@ -24,7 +26,7 @@ namespace VL.BlenderUtils.Parser.Native
         //public string name;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 66)]
         public string name;
-        public IDFlags flag;
+        public short flag;
         public int tag;
         public int us;
         public int icon_id;
@@ -48,6 +50,8 @@ namespace VL.BlenderUtils.Parser.Native
         {
             return this.name;
         }
+
+        
     }
 
     // C++: typedef struct ID_Runtime
@@ -76,30 +80,7 @@ namespace VL.BlenderUtils.Parser.Native
         public int skipped_indirect;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public class Library
-    {
-        public ID id { get; set; }
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
-        string filepath; // = new char[1024];
-
-        public Library()
-        {
-                
-        }
-
-        public static Library Read(BinaryReader handle)
-        {
-            Library lib = new Library();
-            lib.filepath = Reader.ReadString(handle, 1024).Replace('\x00', ' ').Trim(); ;
-            return lib;
-        }
-
-        public string GetFilePath()
-        {
-            return this.filepath;
-        }
-    }
+    
 
     [System.Flags]
     public enum IDFlags : ushort

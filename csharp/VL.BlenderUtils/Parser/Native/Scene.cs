@@ -1,5 +1,8 @@
 ﻿
+using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using VL.BlenderUtils.Parser.DNA;
 
 
 namespace VL.BlenderUtils.Parser.Native
@@ -89,6 +92,53 @@ namespace VL.BlenderUtils.Parser.Native
         public SceneHydra hydra;
 
         public IntPtr runtime;
+
+        public static Scene ReadFromBytes(byte[] bytes, DNACatalog DNACat)
+        {
+            var offset = 0;
+            //Get the DNA structure which correspond to the native class/struct
+            var nativeClassName = typeof(Scene).Name;
+            DNAStructure dnaStruct = DNACat.Structures.Find(x => x.TypeName == nativeClassName);
+            var dnaStructFields = dnaStruct.Fields;
+            
+            //Create new istance of the output class/struct
+            Scene scene = new Scene();
+
+            //Iterate through all the Fields of the native struct
+            foreach (var field in typeof(Native.Scene).GetFields())
+            {
+                //Lookup the dna structures collection and locate the exact dna field that matches the exact name of the native class fields
+                var dnaEquivalentField = dnaStruct.Fields.Find(x=>x.GetShortName() == field.Name);
+                //if the dna equivalent is not null then
+                //1. Construct the object
+                //  a. Get the size of the dna equivalent (Calculated Size)
+                //  b. Set the size of the bytes.Take(..)
+                //  c. Return the Object 
+                //  d. proceed next
+
+                /*
+                 * Example --> first field in native class is ID
+                 * we lookup in the DNACatalog.Structures to find the ID,
+                 * we get the Size of the ID and read the bytes with a Helper Function in order to return an ID,
+                 * the offset must be set then to the size of the initial object.
+                 */
+                if (dnaEquivalentField != null)
+                {
+                    Console.WriteLine($"{dnaEquivalentField.GetShortName()} " + $"--> {field.Name} of type {field.FieldType} " + 
+                        $"with size of {dnaEquivalentField.CalculatedSize}");
+                    //field.SetValue(scene, new ID());
+                }
+
+                else
+                {
+                    Console.WriteLine($"!!! ---> '{field.Name}' can not be matched!");
+                }
+                    
+            }
+            
+            return scene;
+
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
