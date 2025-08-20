@@ -19,7 +19,7 @@ namespace VL.BlenderUtils.Parser.Native
         public IntPtr sculpt;
 
         // C: short type;
-        public ObjectType type;
+        public short type;
         // C: short partype;
         public short partype;
         // C: int par1, par2, par3;
@@ -32,17 +32,18 @@ namespace VL.BlenderUtils.Parser.Native
         // C: struct Object *parent, *track;
         public IntPtr parent;
         public IntPtr track;
-        // C: struct Object *proxy DNA_DEPRECATED;
+
+        [DNA_DEPRECATED]
         public IntPtr proxy;
-        // C: struct Object *proxy_group DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public IntPtr proxy_group;
-        // C: struct Object *proxy_from DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public IntPtr proxy_from;
-        // C: struct Ipo *ipo DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public IntPtr ipo;
-        // C: struct bAction *action DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public IntPtr action;
-        // C: struct bAction *poselib DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public IntPtr poselib;
         // C: struct bPose *pose;
         public IntPtr pose;
@@ -58,26 +59,21 @@ namespace VL.BlenderUtils.Parser.Native
         // C: void *_pad0;
         public byte _pad0;
 
-        // C: ListBase constraintChannels DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public ListBase constraintChannels;
-        // C: ListBase effect DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public ListBase effect;
-        // C: ListBase defbase DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public ListBase defbase;
-        // C: ListBase fmaps DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public ListBase fmaps;
-        // C: ListBase modifiers;
+        
         public ListBase modifiers;
-        // C: ListBase greasepencil_modifiers;
         public ListBase greasepencil_modifiers;
-        // C: ListBase shader_fx;
         public ListBase shader_fx;
 
-        // C: int mode;
         public int mode;
-        // C: int restore_mode;
         public int restore_mode;
-
         // C: struct Material **mat; (A pointer to an array of pointers)
         public IntPtr mat;
         // C: char *matbits; (A pointer to a byte array)
@@ -87,21 +83,18 @@ namespace VL.BlenderUtils.Parser.Native
         // C: int actcol;
         public int actcol;
 
-        // C: float loc[3], dloc[3];
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
         public float[] loc;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
         public float[] dloc;
-        // C: float scale[3];
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
         public float[] scale;
-        // C: float dsize[3] DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
         public float[] dsize;
-        // C: float dscale[3];
+
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
         public float[] dscale;
-        // C: float rot[3], drot[3];
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
         public float[] rot;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
@@ -120,143 +113,142 @@ namespace VL.BlenderUtils.Parser.Native
         public float rotAngle;
         public float drotAngle;
         // C: float parentinv[4][4]; (2D array, must be flattened to a 1D array)
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4*4)]
         public float[] parentinv;
         // C: float constinv[4][4]; (2D array, must be flattened to a 1D array)
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4*4)]
         public float[] constinv;
 
-        // C: unsigned int lay DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public uint lay;
-        // C: short flag;
+        /** Copy of Base. */
         public short flag;
-        // C: short colbits DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public short colbits;
 
-        // C: short transflag, protectflag;
+        /** Transformation settings and transform locks. */
         public short transflag;
         public short protectflag;
-        // C: short trackflag, upflag;
         public short trackflag;
         public short upflag;
-        // C: short nlaflag;
+        /** Used for DopeSheet filtering settings (expanded/collapsed). */
         public short nlaflag;
 
-        // C: char _pad1;
+        
         public byte _pad1;
         // C: char duplicator_visibility_flag;
         public byte duplicator_visibility_flag;
 
-        // C: short base_flag;
+        /* Depsgraph */
+        /** Used by depsgraph, flushed from base. */
         public short base_flag;
-        // C: unsigned short base_local_view_bits;
+        /** Used by viewport, synced from base. */
         public ushort base_local_view_bits;
 
-        // C: unsigned short col_group, col_mask;
+        /** Collision mask settings */
         public ushort col_group;
         public ushort col_mask;
 
-        // C: short rotmode;
+        /** Rotation mode - uses defines set out in DNA_action_types.h for PoseChannel rotations.... */
         public short rotmode;
 
-        // C: char boundtype;
-        public byte boundtype;
-        // C: char collision_boundtype;
-        public byte collision_boundtype;
+        /** Bounding box use for drawing. */
+        
+        public char boundtype;
+        /** Bounding box type used for collision. */
+        [MarshalAs(UnmanagedType.I1)]
+        public char collision_boundtype;
 
-        // C: short dtx;
+        /** Viewport draw extra settings. */
         public short dtx;
-        // C: char dt;
+        /** Viewport draw type. */
         public byte dt;
-        // C: char empty_drawtype;
+        [MarshalAs(UnmanagedType.I1)]
         public byte empty_drawtype;
-        // C: float empty_drawsize;
+        
         public float empty_drawsize;
-        // C: float instance_faces_scale;
+        /** Dupliface scale. */
         public float instance_faces_scale;
 
         // C: short index;
         public short index;
-        // C: unsigned short actdef DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public ushort actdef;
-        // C: char _pad2[4];
+        /** Current face map, NOTE: index starts at 1. */
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public byte[] _pad2;
-        // C: float color[4];
+        /** Object color (in most cases the material color is used for drawing). */
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public float[] color;
 
-        // C: short softflag;
+        /** Softbody settings. */
         public short softflag;
 
-        // C: short visibility_flag;
+        /** For restricting view, select, render etc. accessible in outliner. */
         public short visibility_flag;
 
-        // C: short shapenr;
+        /** Current shape key for menu or pinned. */
         public short shapenr;
-        // C: char shapeflag;
+        /** Flag for pinning. */
         public byte shapeflag;
 
-        // C: char _pad3[1];
+        
         public byte _pad3;
 
-        // C: ListBase constraints;
+        /** Object constraints. */
         public ListBase constraints;
-        // C: ListBase nlastrips DNA_DEPRECATED;
+        [DNA_DEPRECATED ]
         public ListBase nlastrips;
-        // C: ListBase hooks DNA_DEPRECATED;
+        [DNA_DEPRECATED]
         public ListBase hooks;
-        // C: ListBase particlesystem;
+        /** Particle systems. */
         public ListBase particlesystem;
 
-        // C: struct PartDeflect *pd;
+        /** Particle deflector/attractor/collision data. */
         public IntPtr pd;
-        // C: struct SoftBody *soft;
+        /** If exists, saved in file. */
         public IntPtr soft;
-        // C: struct Collection *instance_collection;
+        /** Object duplicator for group. */
         public IntPtr instance_collection;
-        // C: struct FluidsimSettings *fluidsimSettings DNA_DEPRECATED;
+
+        /** If fluidsim enabled, store additional settings. */
+        [DNA_DEPRECATED]
         public IntPtr fluidsimSettings;
 
         // C: ListBase pc_ids;
         public ListBase pc_ids;
 
-        // C: struct RigidBodyOb *rigidbody_object;
+        /** Settings for Bullet rigid body. */
         public IntPtr rigidbody_object;
-        // C: struct RigidBodyCon *rigidbody_constraint;
+        /** Settings for Bullet constraint. */
         public IntPtr rigidbody_constraint;
 
-        // C: float ima_ofs[2];
+        /** Offset for image empties. */
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
         public float[] ima_ofs;
-        // C: ImageUser *iuser;
+
+        /** Must be non-null when object is an empty image. */
         public IntPtr iuser;
-        // C: char empty_image_visibility_flag;
         public byte empty_image_visibility_flag;
-        // C: char empty_image_depth;
         public byte empty_image_depth;
-        // C: char empty_image_flag;
         public byte empty_image_flag;
 
-        // C: uint8_t modifier_flag;
+        /** ObjectModifierFlag */
         public byte modifier_flag;
 
-        // C: float shadow_terminator_normal_offset;
+        
         public float shadow_terminator_normal_offset;
-        // C: float shadow_terminator_geometry_offset;
         public float shadow_terminator_geometry_offset;
-        // C: float shadow_terminator_shading_offset;
         public float shadow_terminator_shading_offset;
 
-        // C: struct PreviewImage *preview;
         public IntPtr preview;
-        // C: ObjectLineArt lineart; (You will need to define this struct)
         public ObjectLineArt lineart;
-        // C: struct LightgroupMembership *lightgroup;
+        /** Light-group membership information. */
         public IntPtr lightgroup;
-        // C: LightLinking *light_linking;
+        /** Light linking information. */
         public IntPtr light_linking;
-        // C: struct LightProbeObjectCache *lightprobe_cache;
+
+        /** Irradiance caches baked for this object (light-probes only). */
         public IntPtr lightprobe_cache;
 
         // C: ObjectRuntimeHandle *runtime;

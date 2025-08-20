@@ -15,25 +15,31 @@ namespace VL.BlenderUtils.Parser.Native
         public IntPtr camera;
         public IntPtr world;
         public IntPtr set;
-
-        public ListBase base_list_deprecated;
-        public IntPtr basact_deprecated;
+        [DNA_DEPRECATED]
+        public ListBase base_list;
+        [DNA_DEPRECATED]
+        public IntPtr basact;
         public IntPtr _pad1;
 
         public View3DCursor cursor;
-
-        public uint lay_deprecated;
-        public int layact_deprecated;
+        [DNA_DEPRECATED]
+        public uint lay;
+        [DNA_DEPRECATED]
+        public int layact;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public byte[] _pad2;
 
         public short flag;
-        [MarshalAs(UnmanagedType.I1)]
+
+        
+        [MarshalAs(UnmanagedType.I1), DNA_DEPRECATED]
         public byte use_nodes_deprecated;
+
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
         public byte[] _pad3;
 
-        public IntPtr nodetree_deprecated;
+        [DNA_DEPRECATED]
+        public IntPtr nodetree;
         public IntPtr compositing_node_group;
         public IntPtr ed;
         public IntPtr toolsettings;
@@ -93,52 +99,8 @@ namespace VL.BlenderUtils.Parser.Native
 
         public IntPtr runtime;
 
-        public static Scene ReadFromBytes(byte[] bytes, DNACatalog DNACat)
-        {
-            var offset = 0;
-            //Get the DNA structure which correspond to the native class/struct
-            var nativeClassName = typeof(Scene).Name;
-            DNAStructure dnaStruct = DNACat.Structures.Find(x => x.TypeName == nativeClassName);
-            var dnaStructFields = dnaStruct.Fields;
-            
-            //Create new istance of the output class/struct
-            Scene scene = new Scene();
-
-            //Iterate through all the Fields of the native struct
-            foreach (var field in typeof(Native.Scene).GetFields())
-            {
-                //Lookup the dna structures collection and locate the exact dna field that matches the exact name of the native class fields
-                var dnaEquivalentField = dnaStruct.Fields.Find(x=>x.GetShortName() == field.Name);
-                //if the dna equivalent is not null then
-                //1. Construct the object
-                //  a. Get the size of the dna equivalent (Calculated Size)
-                //  b. Set the size of the bytes.Take(..)
-                //  c. Return the Object 
-                //  d. proceed next
-
-                /*
-                 * Example --> first field in native class is ID
-                 * we lookup in the DNACatalog.Structures to find the ID,
-                 * we get the Size of the ID and read the bytes with a Helper Function in order to return an ID,
-                 * the offset must be set then to the size of the initial object.
-                 */
-                if (dnaEquivalentField != null)
-                {
-                    Console.WriteLine($"{dnaEquivalentField.GetShortName()} " + $"--> {field.Name} of type {field.FieldType} " + 
-                        $"with size of {dnaEquivalentField.CalculatedSize}");
-                    //field.SetValue(scene, new ID());
-                }
-
-                else
-                {
-                    Console.WriteLine($"!!! ---> '{field.Name}' can not be matched!");
-                }
-                    
-            }
-            
-            return scene;
-
-        }
+       public Scene()
+        { }
     }
 
     [StructLayout(LayoutKind.Sequential)]

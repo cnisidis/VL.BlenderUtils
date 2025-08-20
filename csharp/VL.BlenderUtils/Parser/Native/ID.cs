@@ -22,8 +22,6 @@ namespace VL.BlenderUtils.Parser.Native
         public IntPtr asset_data;
         // C++: char name[258];
         // Fixed-size C-style string.
-        //[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 66)] //66 works 
-        //public string name;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 66)]
         public string name;
         public short flag;
@@ -51,7 +49,6 @@ namespace VL.BlenderUtils.Parser.Native
             return this.name;
         }
 
-        
     }
 
     // C++: typedef struct ID_Runtime
@@ -67,6 +64,11 @@ namespace VL.BlenderUtils.Parser.Native
         // C++: struct ID_Readfile_Data *readfile_data;
         // Pointer to another struct, represented as an IntPtr.
         public IntPtr readfile_data;
+
+        public ID_Runtime()
+        {
+
+        }
     }
 
     // C++: typedef struct ID_Runtime_Remap
@@ -78,6 +80,11 @@ namespace VL.BlenderUtils.Parser.Native
         public int skipped_refcounted;
         public int skipped_direct;
         public int skipped_indirect;
+
+        public ID_Runtime_Remap()
+        {
+
+        }
     }
 
     

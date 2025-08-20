@@ -3,13 +3,19 @@
 //https://github.com/blender/blender/blob/main/doc/blender_file_format/BlendFileReader.py
 
 
-using System.Runtime.InteropServices;
-using VL.BlenderUtils.Parser.Native;
-using VL.BlenderUtils.Parser.Managed;
-using VL.Lib.Collections;
-using VL.BlenderUtils.Parser.DNA;
+using CommunityToolkit.HighPerformance;
 using System.CodeDom;
+using System.Drawing;
+using System.Reactive.Concurrency;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
+using VL.BlenderUtils.Parser.DNA;
+using VL.BlenderUtils.Parser.Managed;
+using VL.BlenderUtils.Parser.Native;
+using VL.Core;
+using VL.Lib.Animation;
+using VL.Lib.Collections;
 
 namespace VL.BlenderUtils.Parser
 {
@@ -21,6 +27,8 @@ namespace VL.BlenderUtils.Parser
         //List<FileBlock> blocks { get; set; }
         public List<BlenderObjectBase> Objects { get; set; }
         public List<Managed.Scene> Scenes { get; set; }
+
+        public List<Camera> Cameras { get; set; }
         
 
         private bool FoundDnaBlock = false;
@@ -30,7 +38,9 @@ namespace VL.BlenderUtils.Parser
         private BinaryReader _handle;
         private Dictionary<IntPtr, FileBlock> Blocks;
 
-        
+        StringBuilder Logging = new StringBuilder();
+        private string _logFilePath;
+        private string _logFileName;
         public BlendFile()
         {
             //blocks = new List<FileBlock>();
@@ -38,27 +48,34 @@ namespace VL.BlenderUtils.Parser
             Objects = new List<BlenderObjectBase>();
             Blocks = new Dictionary<IntPtr, FileBlock>();
             Scenes = new();
+            _logFilePath = Path.GetDirectoryName(AppHost.Current.AppPath);
+            _logFileName = "log.txt";
+            //Console.WriteLine(System.IO.Path.GetTempPath());
         }
 
         public void OpenBlendFile(string blendFile)
         {
+            Logging.Clear();
+            Blocks.Clear();
             
+                File.WriteAllText(_logFilePath + "/" + _logFileName, String.Empty); 
 
-            _fileStream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None);
+
+                _fileStream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None);
             _handle = new BinaryReader(_fileStream) ;
            
             var magic = Reader.ReadString(_handle, 7);
             if (magic.Contains("BLENDER") || magic.Contains("BULLETf"))
             {
-                Console.WriteLine("Normal blendfile detected");
+                Logging.AppendLine("Normal blendfile detected");
                 _handle.BaseStream.Seek(0, SeekOrigin.Begin);
 
                 header = new Header(_handle);
 
-                Console.WriteLine("Version: {0:G} | LittleEndianess: {1:G} | Pointer Size: {2:G}", header.Version, header.LittleEndianess, header.PointerSize);
+                Logging.AppendLine($"Version: {header.Version} | LittleEndianess: {header.LittleEndianess} | Pointer Size: {header.PointerSize}");
 
                 var fileBlock = new FileBlock(_handle, this);
-
+                var isEnd = false; 
                 while (!FoundDnaBlock)
                 {
                     if (fileBlock.Header.Code.Contains("DNA1") || fileBlock.Header.Code.Contains("SDNA"))
@@ -66,75 +83,102 @@ namespace VL.BlenderUtils.Parser
                         Catalog = new DNACatalog(header, _handle);
                         FoundDnaBlock = true;
                     }
+                    
+                    
                     else
                         fileBlock.Header.Skip(_handle);
 
-                    //blocks.Add(fileBlock);
+                    
                     try
                     {
-                        if(fileBlock.Header.Code.Contains("CA")) { Console.WriteLine($"{fileBlock.Header.FileOffset} {fileBlock.Header.OldAddress}"); }
                         Blocks.Add(new IntPtr((long)fileBlock.Header.OldAddress), fileBlock);
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        Console.WriteLine(fileBlock.Header.OldAddress);
+                        
+                        Logging.AppendLine($"{ex.Message} Block:{fileBlock.Header.Code} Add: {fileBlock.Header.OldAddress} Offset:{fileBlock.Header.FileOffset} Size:{fileBlock.Header.Size}");
+                        //Resolve duplicate:
+                        FileBlock duplicate = null;
+                        var found = Blocks.TryGetValue(new IntPtr((long)fileBlock.Header.OldAddress),out duplicate);
+                        if (found)
+                            Logging.AppendLine($"Block:{duplicate.Header.Code} Add: {duplicate.Header.OldAddress} Offset:{duplicate.Header.FileOffset} Size:{duplicate.Header.Size}");
+                        else
+                            Logging.AppendLine("Missing Block ???");
                     }
+                    
                     fileBlock = new FileBlock(_handle, this);
-
 
                 }
                 //END FileBlock
-
+                Console.WriteLine(fileBlock.Header.Code);
                 Blocks.Add(new IntPtr((long)fileBlock.Header.OldAddress), fileBlock);
             }
             else
             {
                 throw new NotImplementedException();
             }
+
+            try
             {
-                
                 Map();
-                
             }
-            Console.WriteLine(Marshal.SizeOf<ID>().ToString());
+            catch(Exception ex) 
+            {
+                Console.WriteLine(ex.Message );
+                this.Dispose();
+            }
+            
+            Console.WriteLine(BlenderMarshal.SizeOf(typeof(Native.ID)));
             Dispose();
             
         }
 
         public void Map()
         {
-            
-            var _scnenes = Blocks.Values.ToList().FindAll(x=>x.Header.Code == "SC");
-            
-            foreach(var _scn in _scnenes)
-            {
-                var offset = 0;
-                for (int i = 0; i < _scn.Header.Count; i++)
-                {
-                    var depth = 0;
-                    var bytes = GetFileBlockBytesByOffset(_scn.Header);
-                    //var sc = new Managed.Scene(Helpers.BytesToStruct<Native.Scene>(bytes, 0), this);
-                    
-                    var _sc = ReadFromBytes<Native.Scene>(bytes.Skip(offset).ToArray(), Catalog, ref depth);
-                    var sc = new Managed.Scene(_sc, this);
-                    Console.WriteLine(_sc.camera);
-                    Scenes.Add(sc);
-                    //offset = GetDNACatalog().Structures.Find(x => x.TypeName == "Scene").Size;
-                }
-            }
+            //Get all SC (Scene) blocks - if more than one
+            //var blockBytes = ReadBytesFromPtr(new IntPtr((long)fBlock.Header.OldAddress), blockStructInDNA.Size, this);
+            var _scenesBlocks = Blocks.Values.ToList().FindAll(x=>x.Header.Code == "SC");
+            var blockStructInDNA = GetDNACatalog().Structures.Find(x => x.TypeName == "Scene");
+            ResolveStructFromBlocks(_scenesBlocks, "Scene");
             
             _fileStream.Seek(0, SeekOrigin.Begin);
-            
+
             var _objs = Blocks.Values.ToList().FindAll(x => x.Header.Code == "OB");
             foreach (var _obj in _objs)
             {
-                var nativeObj = ResolvePtr<Native.Object>(new IntPtr((long)_obj.Header.OldAddress));
-                var obj = (BlenderObjectBase)CreateManagedObject(nativeObj);
-                Objects.Add(obj);
+                //var bytes = GetFileBlockBytesByOffset<Native.Object>(_obj.Header);
+                //var nativeObj = Helpers.BytesToStruct<Native.Object>(bytes, 0);
+                //var obj = (BlenderObjectBase)CreateManagedObject(nativeObj);
+                //Objects.Add(obj);
             }
 
-            _fileStream.Seek(0, SeekOrigin.Begin);
+            
+            var _cams = Blocks.Values.ToList().FindAll(x => x.Header.Code == "CA");
+            foreach (var _cam in _cams)
+            {
+                //var bytes = GetFileBlockBytesByOffset<Native.Camera>(_cam.Header);
+
+                //var cam = BlenderMarshal.ReadFromBytes<Native.Camera>(bytes, this);
+                
+                ////Console.WriteLine(_sc.id.name);
+                ////var sc = new Managed.Scene(_sc, this);
+
+                //Cameras.Add(cam);
+            }
+            
            
+        }
+
+        public dynamic GetField(byte[] BlockBytes, DNAField Field)
+        {
+            dynamic value = null;
+            if (Field.InnerType == FieldType.String ) return Encoding.ASCII.GetString(BlockBytes, Field.Offset, Field.CalculatedSize);
+            else if (Field.InnerType == FieldType.ValueType)
+            {
+                return BitConverter.ToSingle(BlockBytes, Field.Offset);
+            }
+            
+            return value;
         }
 
         public dynamic CreateManagedObject(Native.Object nativeObject)
@@ -143,7 +187,7 @@ namespace VL.BlenderUtils.Parser
             switch (objectType)
             {
                 case ObjectType.OB_CAMERA:
-                    return new BlenderObject<Camera>(nativeObject, this);
+                    return new BlenderObject<Native.Camera>(nativeObject, this);
                 
                 default:
                     return null ;
@@ -151,9 +195,10 @@ namespace VL.BlenderUtils.Parser
             }
         }
 
-        public byte[] GetFileBlockBytesByOffset(FileBlockHeader header) 
+        public byte[] GetFileBlockBytesByOffset<T>(FileBlockHeader header) 
         {
             var size = header.Size;
+            //var size = Marshal.SizeOf(typeof(T));
             var offset = header.FileOffset;
             var bytes = new byte[size];
             _fileStream.Position = offset;
@@ -162,139 +207,140 @@ namespace VL.BlenderUtils.Parser
             return bytes;
 
         }
+        
         /*
-                 * Example --> first field in native class is ID
-                 * we lookup in the DNACatalog.Structures to find the ID,
-                 * we get the Size of the ID and read the bytes with a Helper Function in order to return an ID,
-                 * the offset must be set then to the size of the initial object.
+        *  METHOD TO RESOLVE STRUCTS and Populate Classes
         */
-        public static T ReadFromBytes<T>(byte[] bytes, DNACatalog DNACat, ref int depth) where T : new()
+        public void ResolveStructFromBlocks(IEnumerable<FileBlock> fileBlocks, string structType )
         {
-            
-            //Get the DNA structure which correspond to the native class/struct
-            var nativeClassName = typeof(T).Name;
-            Console.WriteLine(nativeClassName);
-            DNAStructure dnaStruct = DNACat.Structures.Find(x => x.TypeName == nativeClassName);
-            var dnaStructFields = dnaStruct.Fields;
+            var blockStructInDNA = GetDNACatalog().Structures.Find(x => x.TypeName == structType);
+            if (blockStructInDNA == null) return;
 
-            //Create new istance of the output class/struct
-            T result = new T();
-            var offset = 0;
-            var size = dnaStruct.Size;
-            
-            //Iterate through all the Fields of the native struct
-            foreach (var field in typeof(T).GetFields())
+            foreach (var fBlock in fileBlocks)
             {
-                //Lookup the dna structures collection and locate the exact dna field that matches the exact name of the native class fields
-                var dnaEquivalentField = dnaStruct.Fields.Find(x => x.GetShortName() == field.Name);
-                //if the dna equivalent is not null then
-                //1. Construct the object
-                //  a. Get the size of the dna equivalent (Calculated Size)
-                //  b. Set the size of the bytes.Take(..)
-                //  c. Return the Object 
-                //  d. proceed next
 
-                
-                if (dnaEquivalentField != null)
+                //Read Bytes of this File block (ie type: Scene)
+                _handle.BaseStream.Position = fBlock.Header.FileOffset;
+                var blockBytes = _handle.ReadBytes(blockStructInDNA.Size);
+                //set currenct block Offset to add to the struct fields.
+                var blockOffset = fBlock.Header.FileOffset;
+
+                //Parse retreived Block and Build Struct [Embeded]
+                if (blockBytes != null && blockBytes.Length > 0)
                 {
-                    /*
-                    Console.WriteLine($"{dnaEquivalentField.GetShortName()} " + $"--> {field.Name} of type {field.FieldType} " +
-                        $"with size of {dnaEquivalentField.CalculatedSize}");
-                    */
-                    
-                    var fieldSize = dnaEquivalentField.CalculatedSize;
-                    var type = dnaEquivalentField.SystemType;
-                    dynamic value = null;
-                    switch (dnaEquivalentField.InnerType)
-                    {
-                        case FieldType.Pointer:
-                            value=ReadPrimitiveType(bytes, offset, type, fieldSize);
-                            
-                            break;
-                        case FieldType.ValueType:
-                            value=ReadPrimitiveType(bytes, offset, field.FieldType, fieldSize);
-                            break;
-
-                        case FieldType.Array:
-                            if (dnaEquivalentField.SystemType == typeof(string)) value = ReadPrimitiveType(bytes, offset, field.FieldType, fieldSize);
-                            
-                                break;
-
-                        case FieldType.StructType:
-                            try
-                            {
-                                if (field.FieldType == typeof(ID)) 
-                                { 
-                                    value = (ID)ReadFromBytes<ID>(bytes.Skip(offset).Take(dnaEquivalentField.CalculatedSize).ToArray(), DNACat, ref depth);
-                                }
-                                else if (field.FieldType == typeof(ID_Runtime))
-                                {
-                                    value = (ID_Runtime)ReadFromBytes<Native.ID_Runtime>(bytes.Skip(offset).Take(dnaEquivalentField.CalculatedSize).ToArray(), DNACat, ref depth);
-                                }
-                            }
-                            catch (Exception ex) 
-                            {
-                                Console.WriteLine(ex.Message);
-                            }
-                            
-                            break;
-
-                    }
-                    offset += dnaEquivalentField.Size;
-
-
-                    try
-                    {
-                        Console.WriteLine($"D:{depth} :: {field.Name} -> {value.ToString()}");
-                        field.SetValue(result, value);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                        Console.WriteLine($"D:{depth} :: {field.Name} {field.FieldType} {dnaEquivalentField.Name} {dnaEquivalentField.InnerType} {dnaEquivalentField.SystemType}");
-
-                    }
+                    var depth = 0;
+                    ResolveStructFromBytes(blockBytes, blockStructInDNA, (int)blockOffset, depth );
 
                 }
 
-                else
-                {
-                    Console.WriteLine($"D:{depth} !!! ---> '{field.Name}' can not be matched!");
-                }
 
             }
-            Console.WriteLine($"Native Auto Generated Class {result.GetType()}");
-            depth += 1;
-            return result;
 
+            Console.WriteLine("Resolved Blocks");
         }
 
-        private static dynamic ReadPrimitiveType(byte[] bytes, int offset, System.Type type, int size)
+        public void ResolveStructFromBytes(IEnumerable<byte> bytes, DNAStructure dnaStrcture, int offset, int depth)
         {
-            if (type == typeof(int) || type == typeof(Int32)) return BitConverter.ToInt32(bytes, offset);
-            else if (type == typeof(uint)) return BitConverter.ToUInt32(bytes, offset);
-            else if(type == typeof(float) || type == typeof(Single)) return BitConverter.ToSingle(bytes, offset);
-            else if(type == typeof(short)) return BitConverter.ToInt16(bytes, offset);
-            else if(type == typeof(ushort)) return BitConverter.ToUInt16(bytes, offset);
-            else if(type == typeof(ulong)) return BitConverter.ToUInt64(bytes, offset);
-            else if(type == typeof(long)) return BitConverter.ToInt64(bytes, offset);
-            else if(type == typeof(IntPtr)) return (IntPtr)BitConverter.ToInt64(bytes, offset);
-            else if(type == typeof(string)) return Encoding.UTF8.GetString(bytes, offset, size).TrimEnd('\0');
 
-            else
-                // Add more primitive types as needed.
-                return null;
+            //Read Block with current DNA struct - fields
+            //retreived data => read -> field.offset and field.calculated size
+            /*
+             * This is the Core function of Reading bytes and convert them to values according a struct DNA
+             */
+            depth++;
+            foreach (var field in dnaStrcture.Fields)
+            {
+                var innerOffset = field.Offset + offset;
+                if (field.InnerType == FieldType.Pointer && field.Type.Name != "void")
+                {
+                    _handle.BaseStream.Position = innerOffset;
+                    var valB = _handle.ReadBytes(field.CalculatedSize);
+                    var val = new IntPtr(BitConverter.ToInt64(valB));
+                    if (val != IntPtr.Zero)
+                    {
+                        Blocks.TryGetValue(val, out var result);
+                        {
+                            if (result != null)
+                                Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {result.Header.Code} {val}");
+                            //else Console.WriteLine($"{val} Not Found In Catalog Details {field.Name}.{field.Type.Name}");
+                        }
+
+                    }
+
+                }
+                else if (field.InnerType == FieldType.StructType) //&& field.Type.Name == "ID"
+                {
+                    //Here is the right place to patch - compare native with DNA derived fields.
+                    //GetDNA -> Structs of the embeded DNA struct
+                    var embededStruct = GetDNACatalog().Structures.Find(x => x.TypeName == field.Type.Name);
+                    if (embededStruct != null)
+                    {
+                        Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} | {field.Type.Name}");
+                        ResolveStructFromBytes(bytes, embededStruct, innerOffset, depth);
+
+                    }
+
+
+                }
+                else if (field.InnerType == FieldType.Array)
+                {
+                    if (field.SystemType == typeof(string) && !field.IsMultiDimArray && !field.Name.Contains("_pad"))
+                    {
+
+                        _handle.BaseStream.Position = innerOffset;
+                        var valB = _handle.ReadBytes(field.CalculatedSize);
+                        //var val = Encoding.ASCII.GetString(valB).Trim('\0');
+                        var val = BlenderMarshal.ReadString(valB, 0, field.CalculatedSize);
+                        Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val}");
+                    }
+
+                }
+                else if (field.InnerType == FieldType.ValueType)
+                {
+                    object val = null;
+                    _handle.BaseStream.Position = innerOffset;
+                    if (field.SystemType == typeof(int)) val = _handle.ReadInt32();
+                    if (field.SystemType == typeof(uint)) val = _handle.ReadUInt32();
+                    if (field.SystemType == typeof(short)) val = _handle.ReadInt16();
+                    if (field.SystemType == typeof(ushort)) val = _handle.ReadUInt16();
+                    if (field.SystemType == typeof(float)) val = _handle.ReadSingle();
+                    Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val}");
+
+                }
+            }
+            
+        }
+        private static int GetFieldSize(FieldInfo field)
+        {
+            var marshalAsAttribute = field.GetCustomAttribute<MarshalAsAttribute>();
+            if (marshalAsAttribute != null && marshalAsAttribute.Value == UnmanagedType.ByValArray)
+            {
+                var elementType = field.FieldType.GetElementType();
+                if (elementType == null)
+                {
+                    throw new InvalidOperationException("ByValArray attribute used on a non-array type.");
+                }
+                return marshalAsAttribute.SizeConst * Marshal.SizeOf(elementType);
+            }
+
+            if (field.FieldType == typeof(IntPtr))
+            {
+                return IntPtr.Size;
+            }
+
+            if (field.FieldType.IsValueType)
+            {
+                return Marshal.SizeOf(field.FieldType);
+            }
+
+            return 0;
         }
 
         
 
         /// <summary>
-        /// Lazily resolves a pointer from a data block and deserializes the
-        /// corresponding data into a new struct of type T.
+        /// Your original method, but with the final line replaced with our new parser.
         /// </summary>
-        /// <typeparam name="T">The type of struct to deserialize the data into.</typeparam>
-        /// <param name="oldAddress">The old memory address (the pointer) found in a data block.</param>
-        /// <returns>A new instance of T with the data, or null if the pointer is invalid or not found.</returns>
         public T ResolvePtr<T>(IntPtr oldAddress) where T : struct
         {
             // Pointers can be null (IntPtr.Zero). We should handle this gracefully.
@@ -311,7 +357,7 @@ namespace VL.BlenderUtils.Parser
             }
 
             // Get the size of the data block from its header.
-            long size = fileBlock.Header.Size;
+            long size = Marshal.SizeOf<T>(); //fileBlock.Header.Size;
 
             // Get the file offset (position) from the header.
             long offset = fileBlock.Header.FileOffset;
@@ -339,7 +385,46 @@ namespace VL.BlenderUtils.Parser
             return result;
         }
 
-        
+
+        public static byte[] ReadBytesFromPtr(IntPtr Pointer, int Size, BlendFile blendFile)
+        {
+            
+            // Pointers can be null (IntPtr.Zero). We should handle this gracefully.
+            if (Pointer == IntPtr.Zero)
+            {
+                
+                return new byte[0];
+            }
+
+            // Look up the pointer's corresponding FileBlock in our pre-parsed index.
+            if (!blendFile.Blocks.TryGetValue(Pointer, out var fileBlock))
+            {
+                Console.WriteLine($"Warning: Pointer {Pointer} not found in the map.");
+                return new byte[0];
+            }
+
+            // Get the size of the data block from its header.
+            long size = fileBlock.Header.Size; //fileBlock.Header.Size;
+
+            // Get the file offset (position) from the header.
+            long offset = fileBlock.Header.FileOffset;
+            
+            // CRITICAL: Set the file stream's position to the start of the data block.
+            blendFile._fileStream.Position = offset;
+
+            // Create a byte array to hold the data.
+            var bytes = new byte[size];
+
+            // Read the exact number of bytes for the data block.
+            var totalBytesRead = blendFile._handle.Read(bytes, 0, (int)size);
+            if (totalBytesRead != size)
+            {
+                Console.WriteLine($"Warning: Expected to read {size} bytes but only read {totalBytesRead} for pointer {Pointer}.");
+            }
+
+            return bytes;
+        }
+
 
         public Spread<FileBlock> GetFileBlocks()
         {
@@ -372,6 +457,10 @@ namespace VL.BlenderUtils.Parser
             _fileStream.Dispose();
             _handle.Dispose();
             Console.WriteLine("--Parser Disposed--");
+            
+            File.AppendAllText(_logFilePath +"/" + _logFileName, Logging.ToString());
+            Logging.Clear();
+            
         }
 
         /// <summary>
@@ -511,4 +600,6 @@ namespace VL.BlenderUtils.Parser
 
 
     }
+
+    
 }

@@ -1,6 +1,8 @@
 ﻿
+using Microsoft.VisualBasic.FileIO;
+using VL.BlenderUtils.Parser.DNA;
 using VL.BlenderUtils.Parser.Native;
-
+using System.Runtime.InteropServices;
 namespace VL.BlenderUtils.Parser.Managed
 {
     public abstract class BlenderObjectBase 
@@ -41,6 +43,7 @@ namespace VL.BlenderUtils.Parser.Managed
         // read the data from the file once.
         private T? _dataCache;
 
+        private Type _type;
         /// <summary>
         /// Initializes a new instance of the ManagedObject class.
         /// </summary>
@@ -50,10 +53,19 @@ namespace VL.BlenderUtils.Parser.Managed
         {
             _nativeObject = native;
             _fileParser = fileParser;
-            if(native.data != IntPtr.Zero)
-                _dataCache = fileParser.ResolvePtr<T >(native.data);
+            _type = typeof(T);
+            if (native.data != IntPtr.Zero)
+            {
+                //sDNA.ReadRawBytes(native.data, Marshal.SizeOf<T>() );
+                //_dataCache = fileParser.ReadFromBytes<T>();
+                _dataCache = fileParser.ResolvePtr<T>(native.data);
+            }
+                
+            
             else _dataCache = null;
         }
+
+        
 
         /// <summary>
         /// Lazily resolves the object's data pointer and returns the linked data block.

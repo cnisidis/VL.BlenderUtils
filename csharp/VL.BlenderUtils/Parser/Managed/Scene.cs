@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using VL.BlenderUtils.Parser.DNA;
 using VL.BlenderUtils.Parser.Native;
 using VL.Core.Import;
 
@@ -13,32 +15,35 @@ namespace VL.BlenderUtils.Parser.Managed
     {
 
         private Native.Scene _native;
-        public BlenderObject<Native.Camera> Camera;
+        public readonly BlenderObject<Native.Camera> Camera;
         public string Type;
         public string Name { get; set; }
 
 
         public Scene(Native.Scene native, BlendFile blendFile)
         {
-            this._native = native;
-            /*
-            if (this._native.camera != IntPtr.Zero || this._native.camera!=null)
-            {
-                var _camObj = blendFile.ResolvePtr<Native.Object>(_native.camera);
-                this.Camera = blendFile.CreateManagedObject(_camObj);
-            }
-            */
-            //this.Type = this._native.id.name.Substring(0,2);
-            //this.Name = this._native.id.name.Substring(2, native.id.name.Length - 2);
+            
+            
+                this._native = native;
+                this.Type = this._native.id.name.Substring(0, 2);
+                this.Name = !string.IsNullOrEmpty(this.Name) ?  "" :  this._native.id.name.Substring(2, native.id.name.Length - 2) ;
+            
+                if (this._native.camera != IntPtr.Zero)
+                {
+                    var _camera = blendFile.ResolvePtr<Native.Object>(this._native.camera);
+                    this.Camera = blendFile.CreateManagedObject(_camera);
+                }
+            
             
 
         }
 
         
 
-        public void Split(out string Name)
+        public void Split(out string Name, out string Type)
         {
-            Name = this._native.id.name;
+            Name = this.Name;
+            Type = this.Type;
         }
 
        

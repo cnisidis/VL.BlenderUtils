@@ -17,7 +17,48 @@ namespace VL.BlenderUtils.Parser.DNA
             var sdnaStruct = DNACatalog.Structures.Find(x=>x.TypeName == structNameInFile);
             return sdnaStruct;
         }
+        public static T ReadStructFromBuffer<T>(byte[] dataBlockBytes) where T : new()
+        {
+            var result = new T();
+            var offset = 0;
 
+            // This is where we safely and correctly handle the struct's fields.
+            foreach (var field in typeof(T).GetFields())
+            {
+                // First, get the size of the field.
+                int fieldSize = Marshal.SizeOf(field.FieldType);
+
+                // Check if the field is marked as deprecated.
+                bool isDeprecated = field.IsDefined(typeof(DNA_DEPRECATED), false);
+
+                if (isDeprecated)
+                {
+                    Console.WriteLine($"Skipping field '{field.Name}' as it is deprecated. Advancing offset.");
+                    offset += fieldSize;
+                    continue; // Skip to the next field in the loop.
+                }
+
+                // This is the safe way to read a struct from a buffer.
+                // We'll read directly from the in-memory byte array, not from an IntPtr.
+                IntPtr tempPtr = Marshal.AllocHGlobal(fieldSize);
+                Marshal.Copy(dataBlockBytes, offset, tempPtr, fieldSize);
+
+                try
+                {
+                    object value = Marshal.PtrToStructure(tempPtr, field.FieldType);
+                    field.SetValue(result, value);
+                    Console.WriteLine($"Parsed field '{field.Name}' of type {field.FieldType.Name}.");
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(tempPtr);
+                }
+
+                offset += fieldSize;
+            }
+
+            return result;
+        }
         public static T ReadStruct<T>(IntPtr ptr, string structNameInFile, BlendFile blendFile) where T : new()
         {
             // 1. Get the SDNA metadata for the struct from the file.
@@ -64,14 +105,22 @@ namespace VL.BlenderUtils.Parser.DNA
             }
             if (length <= 0)
             {
-                throw new ArgumentOutOfRangeException("The length must be greater than zero.");
+                return new byte[0];
             }
 
             byte[] buffer = new byte[length];
 
             // This is the key line. It copies 'length' bytes from the
             // unmanaged memory at 'ptr' into our managed 'buffer'.
-            Marshal.Copy(ptr, buffer, 0, length);
+            try
+            {
+                Console.WriteLine($"Copy from {ptr} with length of {length}");
+                Marshal.Copy(ptr, buffer, 0, length);
+            }
+            catch (Exception ex) { 
+                Console.WriteLine(ex.ToString());
+            }
+            
 
             return buffer;
         }
@@ -88,6 +137,7 @@ namespace VL.BlenderUtils.Parser.DNA
         { "double", (typeof(double), 8) },
         { "char", (typeof(char), 1) },
         { "void", (typeof(void), 0) },
+        
     };
 
         private readonly Dictionary<string, DNAType> _allStructs;
@@ -111,10 +161,20 @@ namespace VL.BlenderUtils.Parser.DNA
             var funcPtrMatch = FunctionPointerRegex.Match(fieldName);
             if (funcPtrMatch.Success)
             {
-                resolvedInfo.FieldType = FieldType.FunctionPointer;
-                resolvedInfo.SystemType = typeof(IntPtr);
-                resolvedInfo.PointerLevel = 1;
-                resolvedInfo.CalculatedSize = IntPtr.Size;
+                if(fieldTypeName == "void")
+                {
+                    resolvedInfo.FieldType = FieldType.FunctionPointer;
+                    resolvedInfo.SystemType = typeof(IntPtr);
+                    resolvedInfo.PointerLevel = 1;
+                    resolvedInfo.CalculatedSize = IntPtr.Size;
+                }
+                else
+                {
+                    resolvedInfo.FieldType = FieldType.Void;
+                    resolvedInfo.SystemType = null;
+                    resolvedInfo.CalculatedSize = 0;
+                }
+                
                 return resolvedInfo;
             }
 

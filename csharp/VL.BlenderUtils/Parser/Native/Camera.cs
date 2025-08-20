@@ -9,7 +9,7 @@ namespace VL.BlenderUtils.Parser.Native
     // This is crucial. It ensures the C# struct's memory layout matches
     // the C++ struct's memory layout. `LayoutKind.Sequential`
     // means fields are laid out in the order they are declared.
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Camera
     {
         
@@ -31,6 +31,7 @@ namespace VL.BlenderUtils.Parser.Native
         public float sensor_y;
         public float shiftx;
         public float shifty;
+        [DNA_DEPRECATED]
         public float dof_distance;
         [MarshalAs(UnmanagedType.I1)]
         public SensorFit sensor_fit;

@@ -16,6 +16,8 @@ namespace VL.BlenderUtils.Parser.DNA
         StructType,
         Array,
         MultiDimArray,
+        String,
+        Void
     }
 
     public struct ResolvedTypeInfo
@@ -26,6 +28,7 @@ namespace VL.BlenderUtils.Parser.DNA
         public int PointerLevel;
         public bool IsMultiDimArray;
         public int CalculatedSize;
+        public bool IsVoid;
     }
 
     /// <summary>
@@ -37,6 +40,7 @@ namespace VL.BlenderUtils.Parser.DNA
         public string Name;
         
         public int Size;
+        public int Offset;
 
         // Resolved properties
         public FieldType InnerType { get; private set; }
@@ -44,8 +48,8 @@ namespace VL.BlenderUtils.Parser.DNA
         public List<int> ArraySizes { get; private set; } = new List<int>();
         public int PointerLevel { get; private set; }
         public bool IsMultiDimArray { get; private set; }
-        public int CalculatedSize { get; private set; } // The new property.
-
+        public int CalculatedSize { get; private set; } 
+        public bool IsVoid { get; private set; }
         public void Resolve(Dictionary<string, DNAType> allStructs)
         {
             var resolver = new DNATypeResolver(allStructs);
@@ -57,6 +61,7 @@ namespace VL.BlenderUtils.Parser.DNA
             this.PointerLevel = resolvedInfo.PointerLevel;
             this.IsMultiDimArray = resolvedInfo.IsMultiDimArray;
             this.CalculatedSize = resolvedInfo.CalculatedSize;
+            this.IsVoid = resolvedInfo.IsVoid;
         }
 
 
@@ -74,10 +79,11 @@ namespace VL.BlenderUtils.Parser.DNA
         }
 
 
-        public void Split(out string Name, out DNAType Type)
+        public void Split(out string Name, out DNAType Type, out int Offset)
         {
             Name = this.Name;
             Type = this.Type;
+            Offset = this.Offset;
         }
         
         public dynamic Cast()

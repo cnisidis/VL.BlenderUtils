@@ -89,7 +89,7 @@ namespace VL.BlenderUtils.Parser.DNA
 
 
             var numberOfTypes = Reader.Read(ReaderType.UI, _reader, _header);
-            Console.WriteLine("Building {0:G} TYPES", numberOfTypes);
+            Console.WriteLine($"Building {numberOfTypes} TYPES");
 
             for (int i = 0; i < numberOfTypes; i++)
             {
@@ -101,7 +101,7 @@ namespace VL.BlenderUtils.Parser.DNA
 
             //types lengths
             var TLEN = Reader.ReadString(_reader, 4);
-            Console.WriteLine("Building {0:G} TYPE-LENGTHs", numberOfTypes);
+            Console.WriteLine($"Building {numberOfTypes} TYPE-LENGTHs");
 
             for (int i = 0; i < numberOfTypes; i++)
             {
@@ -122,7 +122,7 @@ namespace VL.BlenderUtils.Parser.DNA
                 return;
             }
             var numberOfStructs = Reader.Read(ReaderType.UI, _reader, _header);
-            Console.WriteLine("Building {0:G} STRUCTS", numberOfStructs);
+            Console.WriteLine($"Building {numberOfStructs} STRUCTS");
 
 
             for (int structureIndex = 0; structureIndex < numberOfStructs; structureIndex++)
@@ -137,7 +137,7 @@ namespace VL.BlenderUtils.Parser.DNA
 
                 var structure = new DNAStructure(typeName);
                 structure.Size = dnaTypes[typeName].Size;
-
+                var fieldOffset = 0;
                 for (int fieldIndex = 0; fieldIndex < numberOfFields; fieldIndex++)
                 {
                     var fTypeIndex = Reader.Read(ReaderType.US, _reader, _header);
@@ -151,7 +151,9 @@ namespace VL.BlenderUtils.Parser.DNA
 
                     var field = new DNAField(fName, fType);
                     field.Resolve(dnaTypes);
+                    field.Offset = fieldOffset;
                     structure.Fields.Add(field);
+                    fieldOffset += field.CalculatedSize;
 
                 }
                 
