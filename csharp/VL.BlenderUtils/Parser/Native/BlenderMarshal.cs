@@ -197,5 +197,12 @@ namespace VL.BlenderUtils.Parser.Native
 
 
         }
+
+        /// <summary>
+        /// Returns an Object of type T by Comparing Dummy DNADummyObject (dictionarry<DNAField, object>)  to Native Classes
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        
     }
+    
 }

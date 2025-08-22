@@ -489,7 +489,7 @@
               <p:showentryindex p:Type="Boolean">true</p:showentryindex>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="BptqA5CFDSFMFcNaqEwIoT" Comment="" Bounds="1956,-70,35,15" ShowValueBox="true" isIOBox="true" Value="ID">
+          <Pad Id="BptqA5CFDSFMFcNaqEwIoT" Comment="" Bounds="1956,-70,35,15" ShowValueBox="true" isIOBox="true" Value="Object">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -535,7 +535,7 @@
               <p:showentryindex p:Type="Boolean">true</p:showentryindex>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="FRf88zqyMmtLTfPwdLupWr" Comment="" Bounds="2710,321,49,138" ShowValueBox="true" isIOBox="true">
+          <Pad Id="FRf88zqyMmtLTfPwdLupWr" Comment="" Bounds="2710,321,50,138" ShowValueBox="true" isIOBox="true">
             <p:ValueBoxSettings>
               <p:showentryindex p:Type="Boolean">true</p:showentryindex>
             </p:ValueBoxSettings>
@@ -567,7 +567,7 @@
             <Pin Id="LLPDwQypSwIPWuboX6rwz9" Name="Type" Kind="OutputPin" />
           </Node>
           <Pad Id="NqM4BQA8yRJOtVnQYV7EGF" Comment="Name" Bounds="979,201,293,42" ShowValueBox="true" isIOBox="true" Value="SCAnotherScene" />
-          <Pad Id="Mib2pIgW05fPEePl90oFo0" Comment="" Bounds="2412,361,117,95" ShowValueBox="true" isIOBox="true">
+          <Pad Id="Mib2pIgW05fPEePl90oFo0" Comment="" Bounds="2412,361,123,95" ShowValueBox="true" isIOBox="true">
             <p:ValueBoxSettings>
               <p:showentryindex p:Type="Boolean">true</p:showentryindex>
             </p:ValueBoxSettings>

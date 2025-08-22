@@ -16,6 +16,7 @@ using VL.BlenderUtils.Parser.Native;
 using VL.Core;
 using VL.Lib.Animation;
 using VL.Lib.Collections;
+using static VL.BlenderUtils.Parser.BlendFile;
 
 namespace VL.BlenderUtils.Parser
 {
@@ -139,34 +140,17 @@ namespace VL.BlenderUtils.Parser
             //var blockBytes = ReadBytesFromPtr(new IntPtr((long)fBlock.Header.OldAddress), blockStructInDNA.Size, this);
             var _scenesBlocks = Blocks.Values.ToList().FindAll(x=>x.Header.Code == "SC");
             var blockStructInDNA = GetDNACatalog().Structures.Find(x => x.TypeName == "Scene");
-            ResolveStructFromBlocks(_scenesBlocks, "Scene");
+            var scIndex = 0;
+            foreach (var fBlock in _scenesBlocks)
+            {
+                ResolveStructFromBlocks(fBlock, "Scene", scIndex);
+                scIndex++;
+            }
+
+                
             
             _fileStream.Seek(0, SeekOrigin.Begin);
 
-            var _objs = Blocks.Values.ToList().FindAll(x => x.Header.Code == "OB");
-            foreach (var _obj in _objs)
-            {
-                //var bytes = GetFileBlockBytesByOffset<Native.Object>(_obj.Header);
-                //var nativeObj = Helpers.BytesToStruct<Native.Object>(bytes, 0);
-                //var obj = (BlenderObjectBase)CreateManagedObject(nativeObj);
-                //Objects.Add(obj);
-            }
-
-            
-            var _cams = Blocks.Values.ToList().FindAll(x => x.Header.Code == "CA");
-            foreach (var _cam in _cams)
-            {
-                //var bytes = GetFileBlockBytesByOffset<Native.Camera>(_cam.Header);
-
-                //var cam = BlenderMarshal.ReadFromBytes<Native.Camera>(bytes, this);
-                
-                ////Console.WriteLine(_sc.id.name);
-                ////var sc = new Managed.Scene(_sc, this);
-
-                //Cameras.Add(cam);
-            }
-            
-           
         }
 
         public dynamic GetField(byte[] BlockBytes, DNAField Field)
@@ -211,32 +195,27 @@ namespace VL.BlenderUtils.Parser
         /*
         *  METHOD TO RESOLVE STRUCTS and Populate Classes
         */
-        public void ResolveStructFromBlocks(IEnumerable<FileBlock> fileBlocks, string structType )
+        public void ResolveStructFromBlocks(FileBlock fBlock, string structType, int index =0, int depth=0 )
         {
             var blockStructInDNA = GetDNACatalog().Structures.Find(x => x.TypeName == structType);
             if (blockStructInDNA == null) return;
 
-            foreach (var fBlock in fileBlocks)
+            Logging.AppendLine($"Resolving Block: {fBlock.Header.Code}");
+            //Read Bytes of this File block (ie type: Scene)
+            _handle.BaseStream.Position = fBlock.Header.FileOffset;
+            var blockBytes = _handle.ReadBytes(blockStructInDNA.Size);
+            //set currenct block Offset to add to the struct fields.
+            var blockOffset = fBlock.Header.FileOffset;
+
+            //Parse retreived Block and Build Struct [Embeded]
+            if (blockBytes != null && blockBytes.Length > 0)
             {
-
-                //Read Bytes of this File block (ie type: Scene)
-                _handle.BaseStream.Position = fBlock.Header.FileOffset;
-                var blockBytes = _handle.ReadBytes(blockStructInDNA.Size);
-                //set currenct block Offset to add to the struct fields.
-                var blockOffset = fBlock.Header.FileOffset;
-
-                //Parse retreived Block and Build Struct [Embeded]
-                if (blockBytes != null && blockBytes.Length > 0)
-                {
-                    var depth = 0;
-                    ResolveStructFromBytes(blockBytes, blockStructInDNA, (int)blockOffset, depth );
-
-                }
-
+                
+                ResolveStructFromBytes(blockBytes, blockStructInDNA, (int)blockOffset, depth );
 
             }
 
-            Console.WriteLine("Resolved Blocks");
+            
         }
 
         public void ResolveStructFromBytes(IEnumerable<byte> bytes, DNAStructure dnaStrcture, int offset, int depth)
@@ -251,17 +230,33 @@ namespace VL.BlenderUtils.Parser
             foreach (var field in dnaStrcture.Fields)
             {
                 var innerOffset = field.Offset + offset;
-                if (field.InnerType == FieldType.Pointer && field.Type.Name != "void")
+                if (field.InnerType == FieldType.Pointer )
                 {
                     _handle.BaseStream.Position = innerOffset;
                     var valB = _handle.ReadBytes(field.CalculatedSize);
                     var val = new IntPtr(BitConverter.ToInt64(valB));
                     if (val != IntPtr.Zero)
                     {
-                        Blocks.TryGetValue(val, out var result);
+                        //Get the File Block by IntPtr
+                        Blocks.TryGetValue(val, out var fileBlock);
                         {
-                            if (result != null)
-                                Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {result.Header.Code} {val}");
+                            if (fileBlock != null)
+                            {
+                                
+                                Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.GetShortName()} => {fileBlock.Header.Code} {val} : {field.Type.Name}");
+
+                                var embededStruct = GetDNACatalog().Structures.Find(x => x.TypeName == field.Type.Name);
+
+                                if (embededStruct != null && (field.Type.Name == "Object"))
+                                {
+                                    Logging.AppendLine($"{new string('\t', depth)}--DATA--");
+                                    _handle.BaseStream.Position=fileBlock.Header.FileOffset;
+                                    var embededBytes = _handle.ReadBytes(embededStruct.Size);
+                                    ResolveStructFromBytes(embededBytes, embededStruct, (int)fileBlock.Header.FileOffset, depth);
+                                }
+
+                            }
+                                
                             //else Console.WriteLine($"{val} Not Found In Catalog Details {field.Name}.{field.Type.Name}");
                         }
 
