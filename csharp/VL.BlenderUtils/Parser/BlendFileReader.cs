@@ -3,20 +3,14 @@
 //https://github.com/blender/blender/blob/main/doc/blender_file_format/BlendFileReader.py
 
 
-using CommunityToolkit.HighPerformance;
-using System.CodeDom;
-using System.Drawing;
-using System.Reactive.Concurrency;
-using System.Reflection;
+
 using System.Runtime.InteropServices;
 using System.Text;
 using VL.BlenderUtils.Parser.DNA;
-using VL.BlenderUtils.Parser.Managed;
 using VL.BlenderUtils.Parser.Native;
 using VL.Core;
-using VL.Lib.Animation;
 using VL.Lib.Collections;
-using static VL.BlenderUtils.Parser.BlendFile;
+
 
 namespace VL.BlenderUtils.Parser
 {
@@ -26,10 +20,10 @@ namespace VL.BlenderUtils.Parser
 
         public Header header { get; set; }
         //List<FileBlock> blocks { get; set; }
-        public List<BlenderObjectBase> Objects { get; set; }
+        public List<Managed.Object> Objects { get; set; }
         public List<Managed.Scene> Scenes { get; set; }
 
-        public List<Camera> Cameras { get; set; }
+        public Patcher Patcher { get; set; }
         
 
         private bool FoundDnaBlock = false;
@@ -46,9 +40,12 @@ namespace VL.BlenderUtils.Parser
         {
             //blocks = new List<FileBlock>();
             
-            Objects = new List<BlenderObjectBase>();
+            Objects = new List<Managed.Object>();
             Blocks = new Dictionary<IntPtr, FileBlock>();
             Scenes = new();
+
+            
+
             _logFilePath = Path.GetDirectoryName(AppHost.Current.AppPath);
             _logFileName = "log.txt";
             //Console.WriteLine(System.IO.Path.GetTempPath());
@@ -136,69 +133,91 @@ namespace VL.BlenderUtils.Parser
 
         public void Map()
         {
-            //Get all SC (Scene) blocks - if more than one
-            //var blockBytes = ReadBytesFromPtr(new IntPtr((long)fBlock.Header.OldAddress), blockStructInDNA.Size, this);
+            //Initialize Patcher [Patcher is responsible to collect all valeus according to the BlendFile's DNA ]
+            Patcher = new Patcher();
+            var _camBlocks = Blocks.Values.ToList().FindAll(x => x.Header.Code == "CA");
+            var camIndex = 0;
+
+            foreach (var fBlock in _camBlocks)
+            {
+                Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Camera", camIndex));
+                camIndex++;
+            }
+
+
+            var _objBlocks = Blocks.Values.ToList().FindAll(x => x.Header.Code == "OB");
+            var obIndex = 0;
+
+            foreach (var fBlock in _objBlocks)
+            {
+                Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Object", obIndex));
+                obIndex++;
+            }
+
             var _scenesBlocks = Blocks.Values.ToList().FindAll(x=>x.Header.Code == "SC");
             var blockStructInDNA = GetDNACatalog().Structures.Find(x => x.TypeName == "Scene");
             var scIndex = 0;
+
             foreach (var fBlock in _scenesBlocks)
             {
-                ResolveStructFromBlocks(fBlock, "Scene", scIndex);
+                Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Scene", scIndex));
                 scIndex++;
             }
 
-                
-            
+            if (Patcher.Objects != null && Patcher.Objects.Count > 0)
+            {
+                foreach (var obj in Patcher.Objects)
+                {
+                    var type = obj.GetValue("structType");
+                    var id = obj.GetObject("id");
+                    var name = id.GetValue("name");
+                    var uuid = id.GetValue("session_uid");
+
+                    Console.WriteLine($"{uuid} {type} {name}");
+
+                    if (type.ToString() == "Object")
+                    {
+                        if(obj.GetObject("data") != null)
+                        {
+                            var dataId = obj.GetObject("data").GetObject("id").GetValue("session_uid");
+                            var dataName = obj.GetObject("data").GetObject("id").GetValue("name");
+                            var dataType = (ObjectType)obj.GetValue("type");
+                            Console.WriteLine($"\t{dataId} {dataName} {dataType} ");
+                        }
+                        
+                        Objects.Add(Managed.Object.FromDummyObject(obj));
+                    }
+                    else if (type.ToString() == "Scene")
+                    {
+
+                        var scene = Managed.Scene.FromDummyObject(obj);
+                        var camId = obj.GetObject("camera") == null ? 0 : obj.GetObject("camera").GetObject("id").GetValue("session_uid");
+                        Console.Write($"Camera Obj Id:{camId}\t");
+                        Scenes.Add(scene);
+                    }
+
+                }
+
+              
+
+            }
+
             _fileStream.Seek(0, SeekOrigin.Begin);
 
         }
 
-        public dynamic GetField(byte[] BlockBytes, DNAField Field)
-        {
-            dynamic value = null;
-            if (Field.InnerType == FieldType.String ) return Encoding.ASCII.GetString(BlockBytes, Field.Offset, Field.CalculatedSize);
-            else if (Field.InnerType == FieldType.ValueType)
-            {
-                return BitConverter.ToSingle(BlockBytes, Field.Offset);
-            }
-            
-            return value;
-        }
-
-        public dynamic CreateManagedObject(Native.Object nativeObject)
-        {
-            var objectType = (ObjectType)nativeObject.type;
-            switch (objectType)
-            {
-                case ObjectType.OB_CAMERA:
-                    return new BlenderObject<Native.Camera>(nativeObject, this);
-                
-                default:
-                    return null ;
-                    //throw new InvalidOperationException($"Cannot create a managed object for unknown type: {objectType}");
-            }
-        }
-
-        public byte[] GetFileBlockBytesByOffset<T>(FileBlockHeader header) 
-        {
-            var size = header.Size;
-            //var size = Marshal.SizeOf(typeof(T));
-            var offset = header.FileOffset;
-            var bytes = new byte[size];
-            _fileStream.Position = offset;
-            _fileStream.Read(bytes, 0, (int)size);
-            _fileStream.Seek(0, SeekOrigin.Begin);
-            return bytes;
-
-        }
-        
+       
+       
         /*
         *  METHOD TO RESOLVE STRUCTS and Populate Classes
         */
-        public void ResolveStructFromBlocks(FileBlock fBlock, string structType, int index =0, int depth=0 )
+        public Patcher.DNADummyObject ResolveStructFromBlock(FileBlock fBlock, string structType, int index =0, int depth=0)
         {
+            Patcher.DNADummyObject dummy = null;
             var blockStructInDNA = GetDNACatalog().Structures.Find(x => x.TypeName == structType);
-            if (blockStructInDNA == null) return;
+            if (blockStructInDNA == null) return dummy;
+
+            
 
             Logging.AppendLine($"Resolving Block: {fBlock.Header.Code}");
             //Read Bytes of this File block (ie type: Scene)
@@ -210,54 +229,96 @@ namespace VL.BlenderUtils.Parser
             //Parse retreived Block and Build Struct [Embeded]
             if (blockBytes != null && blockBytes.Length > 0)
             {
+                dummy = new(blockStructInDNA.TypeName);
+                dummy.AddField("structType", structType);
+                ResolveStructFromBytes(blockBytes, blockStructInDNA, (int)blockOffset, depth, ref dummy );
                 
-                ResolveStructFromBytes(blockBytes, blockStructInDNA, (int)blockOffset, depth );
+               
 
             }
 
-            
+            return dummy;
         }
 
-        public void ResolveStructFromBytes(IEnumerable<byte> bytes, DNAStructure dnaStrcture, int offset, int depth)
+        public void ResolveStructFromBytes(IEnumerable<byte> bytes, DNAStructure dnaStrcture, int offset, int depth,ref Patcher.DNADummyObject parentDummy)
         {
-
+            
             //Read Block with current DNA struct - fields
             //retreived data => read -> field.offset and field.calculated size
             /*
              * This is the Core function of Reading bytes and convert them to values according a struct DNA
              */
+            //Patcher.DNADummyObject dummy = new Patcher.DNADummyObject(dnaStrcture.TypeName);
             depth++;
             foreach (var field in dnaStrcture.Fields)
             {
                 var innerOffset = field.Offset + offset;
-                if (field.InnerType == FieldType.Pointer )
+                object dummyFieldVal = null;
+                if (field.InnerType == FieldType.Pointer || field.InnerType == FieldType.Void)
                 {
                     _handle.BaseStream.Position = innerOffset;
                     var valB = _handle.ReadBytes(field.CalculatedSize);
                     var val = new IntPtr(BitConverter.ToInt64(valB));
-                    if (val != IntPtr.Zero)
+                    if ((IntPtr)val != IntPtr.Zero)
                     {
                         //Get the File Block by IntPtr
-                        Blocks.TryGetValue(val, out var fileBlock);
+                        Blocks.TryGetValue((IntPtr)val, out var fileBlock);
                         {
                             if (fileBlock != null)
                             {
                                 
-                                Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.GetShortName()} => {fileBlock.Header.Code} {val} : {field.Type.Name}");
+                                Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.GetShortName()}:{field.InnerType} => {fileBlock.Header.Code} {val} : {field.Type.Name}");
 
-                                var embededStruct = GetDNACatalog().Structures.Find(x => x.TypeName == field.Type.Name);
+                                var fTypeName = field.Type.Name;
+                                if (fTypeName == "void" && field.GetShortName()=="data")
+                                {
 
+                                    var type = (ObjectType)parentDummy.GetValue("type");
+                                    Logging.AppendLine($"{new string('\t', depth)} maybe data of type {type}");
+                                    if (type != null)
+                                    {
+                                        if(type == ObjectType.OB_CAMERA)
+                                        {
+                                            Logging.AppendLine($"{new string('\t', depth)} Look for IntPtr {val}");
+                                            GetDNACatalog().Structures.Find(x=>x.TypeName == "Camera");
+                                            Blocks.TryGetValue((IntPtr)val, out var cameraBlock);
+                                            if(cameraBlock != null)
+                                            {
+                                                
+                                                var cam = ResolveStructFromBlock(cameraBlock, "Camera", 0, depth);
+                                                dummyFieldVal = cam;
+                                            }
+                                        }
+                                        else if(type == ObjectType.OB_MESH)
+                                        {
+                                            Logging.AppendLine($"{new string('\t', depth)} Look for IntPtr {val}");
+                                            GetDNACatalog().Structures.Find(x => x.TypeName == "Mesh");
+                                            Blocks.TryGetValue((IntPtr)val, out var meshBlock);
+                                            if (meshBlock != null)
+                                            {
+
+                                                var mesh = ResolveStructFromBlock(meshBlock, "Mesh", 0, depth);
+                                                dummyFieldVal = mesh;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Logging.AppendLine($"{new string('\t', depth)} maybe data of type {type}");
+                                        }
+                                    }
+                                      
+                                }
+                                
+                                var embededStruct = GetDNACatalog().Structures.Find(x => x.TypeName == fTypeName);
                                 if (embededStruct != null && (field.Type.Name == "Object"))
                                 {
-                                    Logging.AppendLine($"{new string('\t', depth)}--DATA--");
+                                    var subDummy = new Patcher.DNADummyObject(field.GetShortName());
                                     _handle.BaseStream.Position=fileBlock.Header.FileOffset;
                                     var embededBytes = _handle.ReadBytes(embededStruct.Size);
-                                    ResolveStructFromBytes(embededBytes, embededStruct, (int)fileBlock.Header.FileOffset, depth);
-                                }
-
-                            }
-                                
-                            //else Console.WriteLine($"{val} Not Found In Catalog Details {field.Name}.{field.Type.Name}");
+                                    ResolveStructFromBytes(embededBytes, embededStruct, (int)fileBlock.Header.FileOffset, depth, ref subDummy);
+                                    dummyFieldVal = subDummy;
+                                }  
+                            }                          
                         }
 
                     }
@@ -265,14 +326,17 @@ namespace VL.BlenderUtils.Parser
                 }
                 else if (field.InnerType == FieldType.StructType) //&& field.Type.Name == "ID"
                 {
+                    
                     //Here is the right place to patch - compare native with DNA derived fields.
                     //GetDNA -> Structs of the embeded DNA struct
                     var embededStruct = GetDNACatalog().Structures.Find(x => x.TypeName == field.Type.Name);
                     if (embededStruct != null)
                     {
-                        Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} | {field.Type.Name}");
-                        ResolveStructFromBytes(bytes, embededStruct, innerOffset, depth);
-
+                        var subDummy = new Patcher.DNADummyObject(field.GetShortName());
+                        Logging.AppendLine($"{new string('\t', depth)} {field.InnerType}:{dnaStrcture.TypeName}.{field.Name} | {field.Type.Name}");
+                        ResolveStructFromBytes(bytes, embededStruct, innerOffset, depth, ref subDummy);
+                        dummyFieldVal= subDummy;
+                        
                     }
 
 
@@ -286,7 +350,8 @@ namespace VL.BlenderUtils.Parser
                         var valB = _handle.ReadBytes(field.CalculatedSize);
                         //var val = Encoding.ASCII.GetString(valB).Trim('\0');
                         var val = BlenderMarshal.ReadString(valB, 0, field.CalculatedSize);
-                        Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val}");
+                        Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val} : {field.SystemType}");
+                        dummyFieldVal = val;
                     }
 
                 }
@@ -299,38 +364,20 @@ namespace VL.BlenderUtils.Parser
                     if (field.SystemType == typeof(short)) val = _handle.ReadInt16();
                     if (field.SystemType == typeof(ushort)) val = _handle.ReadUInt16();
                     if (field.SystemType == typeof(float)) val = _handle.ReadSingle();
-                    Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val}");
+                    if (field.SystemType == typeof(char)) val = _handle.ReadByte();
+                    if (field.SystemType == typeof(byte)) val = _handle.ReadByte();
+                    Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val} : {field.SystemType}");
+                    dummyFieldVal = val;    
 
                 }
+
+                parentDummy.AddField(field.GetShortName(), dummyFieldVal);
             }
             
+            
+            
         }
-        private static int GetFieldSize(FieldInfo field)
-        {
-            var marshalAsAttribute = field.GetCustomAttribute<MarshalAsAttribute>();
-            if (marshalAsAttribute != null && marshalAsAttribute.Value == UnmanagedType.ByValArray)
-            {
-                var elementType = field.FieldType.GetElementType();
-                if (elementType == null)
-                {
-                    throw new InvalidOperationException("ByValArray attribute used on a non-array type.");
-                }
-                return marshalAsAttribute.SizeConst * Marshal.SizeOf(elementType);
-            }
-
-            if (field.FieldType == typeof(IntPtr))
-            {
-                return IntPtr.Size;
-            }
-
-            if (field.FieldType.IsValueType)
-            {
-                return Marshal.SizeOf(field.FieldType);
-            }
-
-            return 0;
-        }
-
+        
         
 
         /// <summary>
@@ -433,18 +480,18 @@ namespace VL.BlenderUtils.Parser
             else
                 return null;
         }
-        public IEnumerable<BlenderObjectBase> GetObjects()
+        public Spread<Managed.Object> GetObjects()
         {
-            return this.Objects;
+            return this.Objects.ToSpread();
         }
         public Spread<Managed.Scene> GetScenes()
         {
             return this.Scenes.ToSpread();
         }
 
-        public Spread<BlenderObject<Camera>> GetCameras()
+        public Spread<Managed.Camera> GetCameras()
         {
-            return Objects.OfType<BlenderObject<Camera>>().ToSpread();
+            return Objects.OfType<Managed.Camera>().ToSpread();
         }
 
         public void Dispose()
