@@ -10,14 +10,14 @@ using VL.BlenderUtils.Parser.DNA;
 using VL.BlenderUtils.Parser.Native;
 using VL.Core;
 using VL.Lib.Collections;
-
+using VL.BlenderUtils.Parser.Logger;
 
 namespace VL.BlenderUtils.Parser
 {
     public class BlendFile : IDisposable
     {
 
-
+        private Logger.Logger Log;
         public Header header { get; set; }
         //List<FileBlock> blocks { get; set; }
         public List<Managed.Object> Objects { get; set; }
@@ -33,9 +33,7 @@ namespace VL.BlenderUtils.Parser
         private BinaryReader _handle;
         private Dictionary<IntPtr, FileBlock> Blocks;
 
-        StringBuilder Logging = new StringBuilder();
-        private string _logFilePath;
-        private string _logFileName;
+       
         public BlendFile()
         {
             //blocks = new List<FileBlock>();
@@ -43,21 +41,16 @@ namespace VL.BlenderUtils.Parser
             Objects = new List<Managed.Object>();
             Blocks = new Dictionary<IntPtr, FileBlock>();
             Scenes = new();
-
-            
-
-            _logFilePath = Path.GetDirectoryName(AppHost.Current.AppPath);
-            _logFileName = "log.txt";
-            //Console.WriteLine(System.IO.Path.GetTempPath());
+            Log = new Logger.Logger();
+           
         }
 
         public void OpenBlendFile(string blendFile)
         {
-            Logging.Clear();
+           
             Blocks.Clear();
             
-                File.WriteAllText(_logFilePath + "/" + _logFileName, String.Empty); 
-
+                
 
                 _fileStream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None);
             _handle = new BinaryReader(_fileStream) ;
@@ -65,12 +58,12 @@ namespace VL.BlenderUtils.Parser
             var magic = Reader.ReadString(_handle, 7);
             if (magic.Contains("BLENDER") || magic.Contains("BULLETf"))
             {
-                Logging.AppendLine("Normal blendfile detected");
+                Log.Add("Normal blendfile detected");
                 _handle.BaseStream.Seek(0, SeekOrigin.Begin);
-
+                
                 header = new Header(_handle);
 
-                Logging.AppendLine($"Version: {header.Version} | LittleEndianess: {header.LittleEndianess} | Pointer Size: {header.PointerSize}");
+                Log.Add($"Version: {header.Version} | LittleEndianess: {header.LittleEndianess} | Pointer Size: {header.PointerSize}");
 
                 var fileBlock = new FileBlock(_handle, this);
                 var isEnd = false; 
@@ -94,14 +87,14 @@ namespace VL.BlenderUtils.Parser
                     catch (Exception ex)
                     {
                         
-                        Logging.AppendLine($"{ex.Message} Block:{fileBlock.Header.Code} Add: {fileBlock.Header.OldAddress} Offset:{fileBlock.Header.FileOffset} Size:{fileBlock.Header.Size}");
+                        Log.Add($"{ex.Message} Block:{fileBlock.Header.Code} Add: {fileBlock.Header.OldAddress} Offset:{fileBlock.Header.FileOffset} Size:{fileBlock.Header.Size}", LogType.error);
                         //Resolve duplicate:
                         FileBlock duplicate = null;
                         var found = Blocks.TryGetValue(new IntPtr((long)fileBlock.Header.OldAddress),out duplicate);
                         if (found)
-                            Logging.AppendLine($"Block:{duplicate.Header.Code} Add: {duplicate.Header.OldAddress} Offset:{duplicate.Header.FileOffset} Size:{duplicate.Header.Size}");
+                            Log.Add($"Block:{duplicate.Header.Code} Add: {duplicate.Header.OldAddress} Offset:{duplicate.Header.FileOffset} Size:{duplicate.Header.Size}", LogType.error);
                         else
-                            Logging.AppendLine("Missing Block ???");
+                            Log.Add("Missing Block ???", LogType.error);
                     }
                     
                     fileBlock = new FileBlock(_handle, this);
@@ -109,6 +102,7 @@ namespace VL.BlenderUtils.Parser
                 }
                 //END FileBlock
                 Console.WriteLine(fileBlock.Header.Code);
+                Log.Add("--File Loaded");
                 Blocks.Add(new IntPtr((long)fileBlock.Header.OldAddress), fileBlock);
             }
             else
@@ -198,16 +192,12 @@ namespace VL.BlenderUtils.Parser
 
                 }
 
-              
-
             }
 
             _fileStream.Seek(0, SeekOrigin.Begin);
-
+            Log.Add("--Mapping Completed--");
         }
 
-       
-       
         /*
         *  METHOD TO RESOLVE STRUCTS and Populate Classes
         */
@@ -216,10 +206,9 @@ namespace VL.BlenderUtils.Parser
             Patcher.DNADummyObject dummy = null;
             var blockStructInDNA = GetDNACatalog().Structures.Find(x => x.TypeName == structType);
             if (blockStructInDNA == null) return dummy;
+            depth++;
 
-            
-
-            Logging.AppendLine($"Resolving Block: {fBlock.Header.Code}");
+            Log.Add($"{new string('\t', depth)} --- Resolving Block: {fBlock.Header.Code}");
             //Read Bytes of this File block (ie type: Scene)
             _handle.BaseStream.Position = fBlock.Header.FileOffset;
             var blockBytes = _handle.ReadBytes(blockStructInDNA.Size);
@@ -233,10 +222,9 @@ namespace VL.BlenderUtils.Parser
                 dummy.AddField("structType", structType);
                 ResolveStructFromBytes(blockBytes, blockStructInDNA, (int)blockOffset, depth, ref dummy );
                 
-               
 
             }
-
+            
             return dummy;
         }
 
@@ -267,19 +255,19 @@ namespace VL.BlenderUtils.Parser
                             if (fileBlock != null)
                             {
                                 
-                                Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.GetShortName()}:{field.InnerType} => {fileBlock.Header.Code} {val} : {field.Type.Name}");
+                                Log.Add($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.GetShortName()}:{field.InnerType} => {fileBlock.Header.Code} {val} : {field.Type.Name}");
 
                                 var fTypeName = field.Type.Name;
-                                if (fTypeName == "void" && field.GetShortName()=="data")
+                                if (fTypeName == "void" && field.GetShortName()=="data" && dnaStrcture.TypeName == "Object")
                                 {
 
                                     var type = (ObjectType)parentDummy.GetValue("type");
-                                    Logging.AppendLine($"{new string('\t', depth)} maybe data of type {type}");
+                                    Log.Add($"{new string('\t', depth)} maybe data of type {type}");
                                     if (type != null)
                                     {
                                         if(type == ObjectType.OB_CAMERA)
                                         {
-                                            Logging.AppendLine($"{new string('\t', depth)} Look for IntPtr {val}");
+                                            Log.Add($"{new string('\t', depth)} Look for IntPtr {val}");
                                             GetDNACatalog().Structures.Find(x=>x.TypeName == "Camera");
                                             Blocks.TryGetValue((IntPtr)val, out var cameraBlock);
                                             if(cameraBlock != null)
@@ -291,7 +279,7 @@ namespace VL.BlenderUtils.Parser
                                         }
                                         else if(type == ObjectType.OB_MESH)
                                         {
-                                            Logging.AppendLine($"{new string('\t', depth)} Look for IntPtr {val}");
+                                            Log.Add($"{new string('\t', depth)} Look for IntPtr {val}");
                                             GetDNACatalog().Structures.Find(x => x.TypeName == "Mesh");
                                             Blocks.TryGetValue((IntPtr)val, out var meshBlock);
                                             if (meshBlock != null)
@@ -303,12 +291,16 @@ namespace VL.BlenderUtils.Parser
                                         }
                                         else
                                         {
-                                            Logging.AppendLine($"{new string('\t', depth)} maybe data of type {type}");
+                                            Log.Add($"{new string('\t', depth)} maybe data of type {type}");
                                         }
                                     }
                                       
                                 }
-                                
+                                else if(field.GetShortName() == "data")
+                                {
+                                    Log.Add( $"{new string('\t', depth)} SOME DATA OBVIOUSLY {field.Type.Name}");
+                                }
+
                                 var embededStruct = GetDNACatalog().Structures.Find(x => x.TypeName == fTypeName);
                                 if (embededStruct != null && (field.Type.Name == "Object"))
                                 {
@@ -317,7 +309,20 @@ namespace VL.BlenderUtils.Parser
                                     var embededBytes = _handle.ReadBytes(embededStruct.Size);
                                     ResolveStructFromBytes(embededBytes, embededStruct, (int)fileBlock.Header.FileOffset, depth, ref subDummy);
                                     dummyFieldVal = subDummy;
-                                }  
+                                }
+                                else if(embededStruct != null && embededStruct.TypeName == "Mesh")
+                                {
+                                    Log.Add($"{new string('\t', depth)} NOT an Object {field.Type.Name}");
+                                    if(true)
+                                    {
+                                        Log.Add($"{new string('\t', depth)} A CUSTOM DATA LAYER");
+                                        var subDummy = new Patcher.DNADummyObject(field.GetShortName());
+                                        _handle.BaseStream.Position = fileBlock.Header.FileOffset;
+                                        var embededBytes = _handle.ReadBytes(embededStruct.Size);
+                                        ResolveStructFromBytes(embededBytes, embededStruct, (int)fileBlock.Header.FileOffset, depth, ref subDummy);
+                                        dummyFieldVal = subDummy;
+                                    }
+                                }
                             }                          
                         }
 
@@ -333,12 +338,11 @@ namespace VL.BlenderUtils.Parser
                     if (embededStruct != null)
                     {
                         var subDummy = new Patcher.DNADummyObject(field.GetShortName());
-                        Logging.AppendLine($"{new string('\t', depth)} {field.InnerType}:{dnaStrcture.TypeName}.{field.Name} | {field.Type.Name}");
+                        Log.Add($"{new string('\t', depth)} {field.InnerType}:{dnaStrcture.TypeName}.{field.Name} | {field.Type.Name}");
                         ResolveStructFromBytes(bytes, embededStruct, innerOffset, depth, ref subDummy);
                         dummyFieldVal= subDummy;
                         
                     }
-
 
                 }
                 else if (field.InnerType == FieldType.Array)
@@ -350,7 +354,7 @@ namespace VL.BlenderUtils.Parser
                         var valB = _handle.ReadBytes(field.CalculatedSize);
                         //var val = Encoding.ASCII.GetString(valB).Trim('\0');
                         var val = BlenderMarshal.ReadString(valB, 0, field.CalculatedSize);
-                        Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val} : {field.SystemType}");
+                        Log.Add($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val} : {field.SystemType}");
                         dummyFieldVal = val;
                     }
 
@@ -366,20 +370,16 @@ namespace VL.BlenderUtils.Parser
                     if (field.SystemType == typeof(float)) val = _handle.ReadSingle();
                     if (field.SystemType == typeof(char)) val = _handle.ReadByte();
                     if (field.SystemType == typeof(byte)) val = _handle.ReadByte();
-                    Logging.AppendLine($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val} : {field.SystemType}");
+                    Log.Add($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val} : {field.SystemType}");
                     dummyFieldVal = val;    
 
                 }
 
                 parentDummy.AddField(field.GetShortName(), dummyFieldVal);
             }
-            
-            
-            
+                  
         }
-        
-        
-
+      
         /// <summary>
         /// Your original method, but with the final line replaced with our new parser.
         /// </summary>
@@ -428,44 +428,7 @@ namespace VL.BlenderUtils.Parser
         }
 
 
-        public static byte[] ReadBytesFromPtr(IntPtr Pointer, int Size, BlendFile blendFile)
-        {
-            
-            // Pointers can be null (IntPtr.Zero). We should handle this gracefully.
-            if (Pointer == IntPtr.Zero)
-            {
-                
-                return new byte[0];
-            }
-
-            // Look up the pointer's corresponding FileBlock in our pre-parsed index.
-            if (!blendFile.Blocks.TryGetValue(Pointer, out var fileBlock))
-            {
-                Console.WriteLine($"Warning: Pointer {Pointer} not found in the map.");
-                return new byte[0];
-            }
-
-            // Get the size of the data block from its header.
-            long size = fileBlock.Header.Size; //fileBlock.Header.Size;
-
-            // Get the file offset (position) from the header.
-            long offset = fileBlock.Header.FileOffset;
-            
-            // CRITICAL: Set the file stream's position to the start of the data block.
-            blendFile._fileStream.Position = offset;
-
-            // Create a byte array to hold the data.
-            var bytes = new byte[size];
-
-            // Read the exact number of bytes for the data block.
-            var totalBytesRead = blendFile._handle.Read(bytes, 0, (int)size);
-            if (totalBytesRead != size)
-            {
-                Console.WriteLine($"Warning: Expected to read {size} bytes but only read {totalBytesRead} for pointer {Pointer}.");
-            }
-
-            return bytes;
-        }
+        
 
 
         public Spread<FileBlock> GetFileBlocks()
@@ -500,8 +463,10 @@ namespace VL.BlenderUtils.Parser
             _handle.Dispose();
             Console.WriteLine("--Parser Disposed--");
             
-            File.AppendAllText(_logFilePath +"/" + _logFileName, Logging.ToString());
-            Logging.Clear();
+            
+            Log.Add("--Disposed--");
+            Log.ToFile();
+            Log.Dispose();
             
         }
 
