@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using VL.BlenderUtils.Parser.DNA;
 
 namespace VL.BlenderUtils.Parser.Native
@@ -85,13 +81,11 @@ namespace VL.BlenderUtils.Parser.Native
                         {
                             _bytes = bytes.Skip(offset).ToArray();
                             value = ReadFromBytes<ID>(_bytes, blendFile);
-                            
                         }
                         if(NFType == typeof(Camera))
                         {
                             _bytes = bytes.Skip(offset).ToArray();
-                            value = ReadFromBytes<Camera>(_bytes, blendFile);
-                            
+                            value = ReadFromBytes<Camera>(_bytes, blendFile);   
                         }
                         else if (NFType == typeof(Native.Object))
                         {
@@ -134,7 +128,23 @@ namespace VL.BlenderUtils.Parser.Native
 
         }
 
-
+        public static object ReadArray<T>(byte[] bytes, int offset, int size)
+        {
+            var type = typeof(T);
+            object arr = null;
+            var stride = 4;
+            if (type == typeof(float))
+            {
+                arr = new float[size*stride];
+                Buffer.BlockCopy(bytes, offset, (float[])arr, 0, size);
+            }
+            else if (type == typeof(int))
+            {
+                arr = new int[size * stride];
+                Buffer.BlockCopy(bytes, offset, (int[])arr, 0, size);
+            }
+            return arr;
+        }
 
         public static string ReadString(byte[] bytes, int offset, int size)
         {
@@ -171,7 +181,6 @@ namespace VL.BlenderUtils.Parser.Native
                 Fields = Type.GetFields(BindingFlags.Instance | BindingFlags.Public).Where(x => x.GetCustomAttribute<DNA_DEPRECATED>() != null).ToArray();
             }
                 
-
             foreach (var field in Fields)
             {
                 if(field.FieldType.IsArray || field.FieldType == typeof(string))
@@ -190,19 +199,9 @@ namespace VL.BlenderUtils.Parser.Native
                     size += BlenderMarshal.SizeOf(field.FieldType);
                     //Console.WriteLine($"Structs: {field.FieldType} {field.Name}");
                 }
-                
             }
 
             return size;
-
-
-        }
-
-        /// <summary>
-        /// Returns an Object of type T by Comparing Dummy DNADummyObject (dictionarry<DNAField, object>)  to Native Classes
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        
+        } 
     }
-    
 }

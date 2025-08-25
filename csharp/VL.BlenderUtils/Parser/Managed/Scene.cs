@@ -13,7 +13,6 @@ using VL.Core.Import;
 
 namespace VL.BlenderUtils.Parser.Managed
 {
-
     public class Scene
     {
 
@@ -23,25 +22,21 @@ namespace VL.BlenderUtils.Parser.Managed
         private int SelectedCamera { get; set; }
         public bool HasCamera { private set; get; }
         public RenderData RenderData { get; set; }
-        
         public Scene()
         {
             RenderData = new RenderData();
-            
         }
 
         public void SetSelectedCamera(int uuid)
         {
             this.SelectedCamera = uuid;
         }
-
         public void Split(out string Name, out int uuid, out RenderData RenderData)
         {
             Name = this.Name;
             uuid = this.uuid;
             RenderData = this.RenderData;
         }
-
         public static Scene FromDummyObject(Patcher.DNADummyObject dobj)
         {
             var scn = new Scene();
@@ -57,11 +52,7 @@ namespace VL.BlenderUtils.Parser.Managed
                 scn.HasCamera = true;
             }
 
-            
-
             scn.RenderData = RenderData.FromDummyObject(dobj.GetObject("r"));
-            
-
             return scn;
         }
 
@@ -69,18 +60,14 @@ namespace VL.BlenderUtils.Parser.Managed
         {
             return this.SelectedCamera;
         }
-
-       
     }
     
     public partial class RenderData
     {
         public Int2 Resolution { get; set; }
-
         public int CurrentFrame { get; set; }
         public Int2 StartEndFrames { get; set; }
         public Vector2 Aspect { get; set; }
-
         public string RenderEngine { get; set; }
 
         public static RenderData FromDummyObject(Patcher.DNADummyObject dobj)
@@ -112,7 +99,5 @@ namespace VL.BlenderUtils.Parser.Managed
             Aspect = this.Aspect;
             Engine = this.RenderEngine;
         }
-
     }
-
 }

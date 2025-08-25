@@ -1,14 +1,8 @@
 ﻿
-
 //https://github.com/blender/blender/blob/main/doc/blender_file_format/BlendFileReader.py
-
-
-
 using System.Runtime.InteropServices;
-using System.Text;
 using VL.BlenderUtils.Parser.DNA;
 using VL.BlenderUtils.Parser.Native;
-using VL.Core;
 using VL.Lib.Collections;
 using VL.BlenderUtils.Parser.Logger;
 
@@ -16,41 +10,29 @@ namespace VL.BlenderUtils.Parser
 {
     public class BlendFile : IDisposable
     {
-
         private Logger.Logger Log;
         public Header header { get; set; }
         //List<FileBlock> blocks { get; set; }
         public List<Managed.Object> Objects { get; set; }
         public List<Managed.Scene> Scenes { get; set; }
-
         public Patcher Patcher { get; set; }
-        
-
         private bool FoundDnaBlock = false;
         DNACatalog Catalog;
-
         private FileStream _fileStream;
         private BinaryReader _handle;
         private Dictionary<IntPtr, FileBlock> Blocks;
-
        
         public BlendFile()
         {
-            //blocks = new List<FileBlock>();
-            
             Objects = new List<Managed.Object>();
             Blocks = new Dictionary<IntPtr, FileBlock>();
             Scenes = new();
             Log = new Logger.Logger();
-           
         }
 
         public void OpenBlendFile(string blendFile)
         {
-           
             Blocks.Clear();
-            
-                
 
                 _fileStream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None);
             _handle = new BinaryReader(_fileStream) ;
@@ -122,7 +104,6 @@ namespace VL.BlenderUtils.Parser
             
             Console.WriteLine(BlenderMarshal.SizeOf(typeof(Native.ID)));
             Dispose();
-            
         }
 
         public void Map()
@@ -137,7 +118,6 @@ namespace VL.BlenderUtils.Parser
                 Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Camera", camIndex));
                 camIndex++;
             }
-
 
             var _objBlocks = Blocks.Values.ToList().FindAll(x => x.Header.Code == "OB");
             var obIndex = 0;
@@ -189,9 +169,7 @@ namespace VL.BlenderUtils.Parser
                         Console.Write($"Camera Obj Id:{camId}\t");
                         Scenes.Add(scene);
                     }
-
                 }
-
             }
 
             _fileStream.Seek(0, SeekOrigin.Begin);
@@ -221,8 +199,6 @@ namespace VL.BlenderUtils.Parser
                 dummy = new(blockStructInDNA.TypeName);
                 dummy.AddField("structType", structType);
                 ResolveStructFromBytes(blockBytes, blockStructInDNA, (int)blockOffset, depth, ref dummy );
-                
-
             }
             
             return dummy;
@@ -357,6 +333,24 @@ namespace VL.BlenderUtils.Parser
                         Log.Add($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} => {val} : {field.SystemType}");
                         dummyFieldVal = val;
                     }
+                    else if (!field.IsMultiDimArray && !field.Name.Contains("_pad"))
+                    {
+                        _handle.BaseStream.Position = innerOffset;
+                        var valB = _handle.ReadBytes(field.CalculatedSize);
+                        if(field.SystemType == typeof(float[]))
+                        {
+                            var val = (float[])BlenderMarshal.ReadArray<float>(valB, 0, field.CalculatedSize);
+                            dummyFieldVal = val;
+                        }
+                            
+                        Log.Add($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} =>  : {field.SystemType}[{field.ArraySizes.FirstOrDefault()}]");
+                    }
+                    else if(field.IsMultiDimArray && !field.Name.Contains("_pad"))
+                    {
+                        _handle.BaseStream.Position = innerOffset;
+                        var valB = _handle.ReadBytes(field.CalculatedSize);
+                        Log.Add($"{new string('\t', depth)} {dnaStrcture.TypeName}.{field.Name} =>  : Multi -> {field.SystemType} {string.Join(",", field.ArraySizes.SelectMany(x=>x.ToString()))}");
+                    }
 
                 }
                 else if (field.InnerType == FieldType.ValueType)
@@ -427,10 +421,6 @@ namespace VL.BlenderUtils.Parser
             return result;
         }
 
-
-        
-
-
         public Spread<FileBlock> GetFileBlocks()
         {
             return Blocks.Values.ToSpread();
@@ -462,12 +452,10 @@ namespace VL.BlenderUtils.Parser
             _fileStream.Dispose();
             _handle.Dispose();
             Console.WriteLine("--Parser Disposed--");
-            
-            
+                
             Log.Add("--Disposed--");
             Log.ToFile();
             Log.Dispose();
-            
         }
 
         /// <summary>
@@ -481,7 +469,6 @@ namespace VL.BlenderUtils.Parser
             public string Magic { get; }
             public int PointerSize { get; }
             public bool LittleEndianess { get; }
-
             public int Version { set; get; }
             public Header(BinaryReader handle)
             {
@@ -505,12 +492,10 @@ namespace VL.BlenderUtils.Parser
 
             public void Split(out string Magic, out int PointerSize, out bool LittleEndianess, out int Version)
             {
-
                 Magic = this.Magic;
                 PointerSize = this.PointerSize;
                 LittleEndianess = this.LittleEndianess;
                 Version = this.Version;
-
             }
         }
         /// <summary>
@@ -521,13 +506,11 @@ namespace VL.BlenderUtils.Parser
         {
             BlendFile File;
             public FileBlockHeader Header;
-
             public FileBlock(BinaryReader handle, BlendFile file)
             {
                 this.File = file;
                 this.Header = new FileBlockHeader(handle, file.header);
             }
-
             public void Get(BinaryReader handle)
             {
                 var dnaIndex = this.Header.SDNAIndex;
@@ -535,7 +518,6 @@ namespace VL.BlenderUtils.Parser
                 handle.BaseStream.Seek(this.Header.FileOffset, SeekOrigin.Begin);
 
             }
-
 
             public byte[] Parse(BinaryReader handle, int Size = 0)
             {
@@ -545,8 +527,6 @@ namespace VL.BlenderUtils.Parser
                 return Reader.ReadBytes(handle, s);
 
             }
-
-
         }
         /// <summary>
         /// FileBlockHeader contains the information in a file-block-header.
@@ -573,8 +553,6 @@ namespace VL.BlenderUtils.Parser
                     SDNAIndex = Reader.Read(ReaderType.UI, handle, FileHeader);
                     Count = Reader.Read(ReaderType.UI, handle, FileHeader);
                     FileOffset = handle.BaseStream.Position;
-
-
                 }
                 else
                 {
@@ -592,7 +570,6 @@ namespace VL.BlenderUtils.Parser
             {
                 handle.ReadBytes((int)Size);
             }
-
             public void Split(out string Code, out int Size, out int Index, out int Count, out long FileOffset)
             {
                 Code = this.Code;
@@ -601,12 +578,6 @@ namespace VL.BlenderUtils.Parser
                 Count = (int)this.Count;
                 FileOffset = this.FileOffset;
             }
-
-
         }
-
-
     }
-
-    
 }

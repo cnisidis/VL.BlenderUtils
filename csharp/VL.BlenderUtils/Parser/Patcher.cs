@@ -98,9 +98,7 @@ namespace VL.BlenderUtils.Parser
 
             public DNADummyObject(string Name)
             {
-               
                 this.Name = Name;
-                
             }
 
             public override string ToString()
@@ -115,10 +113,8 @@ namespace VL.BlenderUtils.Parser
             }
 
             public void AddField(string name, object? value)
-            {
-                
+            {    
                 var add = DataFields.TryAdd(name, value);
-
             }
 
             public Spread<object> GetFields()
@@ -128,34 +124,26 @@ namespace VL.BlenderUtils.Parser
 
             public object GetValue(string fieldName)
             {
-                this.DataFields.TryGetValue(fieldName, out object value);
+                this.DataFields.TryGetValue(fieldName.TrimEnd(), out object value);
+                if (value == null) { Console.WriteLine($"Can't retrieve value{this.Name} {fieldName}"); }
                 return value;
             }
 
             public DNADummyObject GetObject(string fieldName)
             {
                 this.DataFields.TryGetValue(fieldName, out object value);
-                
                 return (DNADummyObject)value;
             }
 
             public Spread<KeyValuePair<string, object>> GetChildren()
             {
-                
-
                return DataFields.ToSpread();
             }
 
             public Spread<string> GetFieldNames()
             {
                 return DataFields.Select(x=>x.Key).ToSpread();
-            }
-
-            
-
-            
+            }   
         }
     }
-
-
 }

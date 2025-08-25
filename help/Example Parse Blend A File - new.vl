@@ -94,7 +94,6 @@
             <Pin Id="TGv85ysRE5uPVN0l7wHHx1" Name="Index" Kind="InputPin" DefaultValue="0" />
             <Pin Id="CrlWfbzEYB3O6JfXeLQ72p" Name="Result" Kind="OutputPin" />
           </Node>
-          <Pad Id="ELS312A7yNsLEVjaF0Blsx" Comment="Type" Bounds="979,270,35,15" ShowValueBox="true" isIOBox="true" />
           <Node Bounds="479,50,66,26" Id="G9mtvW4NU7cNXWFdzaSqH3">
             <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Parser.ReadBlendFile" LastDependency="VL.BlenderUtils.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
@@ -139,7 +138,7 @@
           <Pad Id="VRvcOcrVpv6PJRVgLoszFc" Comment="Resolution" Bounds="967,460,35,28" ShowValueBox="true" isIOBox="true" />
           <Pad Id="UUm0Xpcz8OpOojyO91TCw9" Comment="Aspect" Bounds="987,499,35,28" ShowValueBox="true" isIOBox="true" />
           <Pad Id="NvwJ4atMU67MuGuuwEwowe" Comment="Engine" Bounds="907,390,60,15" ShowValueBox="true" isIOBox="true" />
-          <Node Bounds="726,260,104,26" Id="HLwiKdEq5bQMCjv2D0Tv7f">
+          <Node Bounds="686,230,104,26" Id="HLwiKdEq5bQMCjv2D0Tv7f">
             <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Objects.Scene" LastDependency="VL.BlenderUtils.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="GetSelectedCamera" />
@@ -148,8 +147,8 @@
             <Pin Id="KmPZVeCfxmqL4VZTmNxSE5" Name="Scene" Kind="OutputPin" />
             <Pin Id="NzdiNO7nI2VPDEY76E21Ij" Name="Camera Id" Kind="OutputPin" />
           </Node>
-          <Pad Id="VPn3ldRyNi1NMCci93yebv" Comment="Camera Id" Bounds="827,310,35,15" ShowValueBox="true" isIOBox="true" />
-          <Node Bounds="574,140,71,26" Id="F23H2Od4pidMlKaX4kD8C2">
+          <Pad Id="VPn3ldRyNi1NMCci93yebv" Comment="Camera Id" Bounds="787,280,35,15" ShowValueBox="true" isIOBox="true" />
+          <Node Bounds="749,170,71,26" Id="F23H2Od4pidMlKaX4kD8C2">
             <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Parser" LastDependency="VL.BlenderUtils.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="GetCameras" />
@@ -202,7 +201,7 @@
               </Node>
             </Patch>
           </Node>
-          <Pad Id="Nkuil4H9Th9Mdab4gJWVCc" Comment="" Bounds="1477,51,35,15" ShowValueBox="true" isIOBox="true" Value="CustomDataLayer">
+          <Pad Id="Nkuil4H9Th9Mdab4gJWVCc" Comment="" Bounds="1477,51,101,19" ShowValueBox="true" isIOBox="true" Value="Empty">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -293,6 +292,101 @@
             <Pin Id="GUkQEQXxggnMCZKyDdQHSd" Name="Input" Kind="StateInputPin" />
             <Pin Id="H1AneevIzrhN620uZue6xN" Name="Result" Kind="OutputPin" />
           </Node>
+          <Node Bounds="597,121,52,19" Id="Szck5OQcmAJOoL48S3ZjHr">
+            <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="4026531840" Name="Spread" NeedsToBeDirectParent="true" />
+              <Choice Kind="OperationCallFlag" Name="GetSlice" />
+            </p:NodeReference>
+            <Pin Id="VQG9XGpBjbtPbfSwA893Kd" Name="Input" Kind="StateInputPin" />
+            <Pin Id="JkOvnCAAfX7Qc8EBM28iK0" Name="Default Value" Kind="InputPin" />
+            <Pin Id="QYsMEhxJ78rNnga2mznWY9" Name="Index" Kind="InputPin" DefaultValue="3" />
+            <Pin Id="ALXkqXMXN7bLNRLDuHXrnn" Name="Result" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="597,150,65,26" Id="F9hNlcjeDb5Plf3l9tanoS">
+            <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Objects" LastDependency="VL.BlenderUtils.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Objects" />
+              <CategoryReference Kind="Category" Name="Objects" NeedsToBeDirectParent="true" />
+              <Choice Kind="OperationCallFlag" Name="Split" />
+            </p:NodeReference>
+            <Pin Id="Nquh8g21dCeQNMeOVcJwdy" Name="Obejct" Kind="InputPin" />
+            <Pin Id="NhGfmFJJR3LOSvjdxwd6w8" Name="Obejct" Kind="OutputPin" />
+            <Pin Id="HUNYrpfWImaNDX3h0meEQX" Name="Name" Kind="OutputPin" />
+            <Pin Id="L1YeclYyiWbPy3beaVMRzP" Name="Uid" Kind="OutputPin" />
+            <Pin Id="POjR2wSlHuTPYBDTCkegFp" Name="Object Type" Kind="OutputPin" />
+          </Node>
+          <Pad Id="EvuaDnOSOYMMFYvF90L8HZ" Comment="Object Type" Bounds="659,190,125,15" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="JR13yjzQTfxNb7xG2FR1rM" Comment="Name" Bounds="619,210,112,15" ShowValueBox="true" isIOBox="true" />
+          <Node Bounds="500,190,43,26" Id="G1oXFdu5nOOQaEEkkom3cz">
+            <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Objects" LastDependency="VL.BlenderUtils.vl" OverloadStrategy="AllPinsThatAreNotCommon">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Objects" NeedsToBeDirectParent="true" />
+              <Choice Kind="OperationCallFlag" Name="Data" />
+              <PinReference Kind="InputPin" Name="Object">
+                <p:DataTypeReference p:Type="TypeReference">
+                  <Choice Kind="TypeFlag" Name="Object" />
+                </p:DataTypeReference>
+              </PinReference>
+              <PinReference Kind="OutputPin" Name="Object">
+                <p:DataTypeReference p:Type="TypeReference">
+                  <Choice Kind="TypeFlag" Name="Object" />
+                </p:DataTypeReference>
+              </PinReference>
+              <PinReference Kind="OutputPin" Name="Data">
+                <p:DataTypeReference p:Type="TypeReference" LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+                  <Choice Kind="TypeFlag" Name="Object" />
+                </p:DataTypeReference>
+              </PinReference>
+            </p:NodeReference>
+            <Pin Id="RFjl0V1tqHqLyEEFVDhb2L" Name="Object" Kind="InputPin" />
+            <Pin Id="CF0z3ggSEW3PBeFJwK6QZC" Name="Object" Kind="OutputPin" />
+            <Pin Id="PhL9ssIGxqNQFdVRvtlH8w" Name="Data" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="538,240,48,19" Id="Tqu5qBW9lq2OOx9YJS2ERB">
+            <p:NodeReference LastCategoryFullName="Primitive.Object" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="OperationCallFlag" Name="CastAs" />
+            </p:NodeReference>
+            <Pin Id="IfxVWeyGaj3O0nwX7vI4K1" Name="Input" Kind="StateInputPin" />
+            <Pin Id="DPRxWoTA1d4MIqBLhyhFpf" Name="Default" Kind="InputPin" />
+            <Pin Id="DeGoiQWTkWbPBV1GCjFtgk" Name="Result" Kind="OutputPin" />
+            <Pin Id="J9JLk0ntNtiPORcddnikYB" Name="Success" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="538,270,48,26" Id="FWpWD9zf1IyL2ex1fk7npK">
+            <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Objects.Camera" LastDependency="VL.BlenderUtils.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Camera" />
+              <Choice Kind="OperationCallFlag" Name="Name" />
+            </p:NodeReference>
+            <Pin Id="NvpeEU8Rct7NzfCaxuywCD" Name="Object" Kind="InputPin" />
+            <Pin Id="HN9Mh35fIdpPZEAWt4fgXI" Name="Object" Kind="OutputPin" />
+            <Pin Id="II53Uu5Fw7VMIehCV0K1pQ" Name="Name" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="538,330,48,26" Id="CsoJe7BhkttLaCEevkwmr1">
+            <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Objects.Camera" LastDependency="VL.BlenderUtils.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="OperationCallFlag" Name="Lens" />
+            </p:NodeReference>
+            <Pin Id="EKDwcRLFVrmLZXXr9qratH" Name="Camera" Kind="InputPin" />
+            <Pin Id="IwD3fwpBLiQN8oMVHczznd" Name="Camera" Kind="OutputPin" />
+            <Pin Id="OaA0075AlzkLwfYuFaY4QU" Name="Lens" Kind="OutputPin" />
+          </Node>
+          <Pad Id="BwO5DgQaDcKQYkqSgIZjC3" Comment="Lens" Bounds="583,370,92,15" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="DxUW4iyAu0fNnle9eQzcM4" Comment="Name" Bounds="583,310,90,15" ShowValueBox="true" isIOBox="true" />
+          <Node Bounds="402,271,65,26" Id="MXVV30QYLdVLZp1D6acR7Z">
+            <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Objects.Camera" LastDependency="VL.BlenderUtils.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Camera" />
+              <Choice Kind="OperationCallFlag" Name="Split" />
+            </p:NodeReference>
+            <Pin Id="LFqgkkl5mbiLWW3EqHDjxV" Name="Camera" Kind="InputPin" />
+            <Pin Id="G2S18i4KoqPMoicdntazvj" Name="Camera" Kind="OutputPin" />
+            <Pin Id="Miq2NdzRj3cLvUEjgt87kC" Name="Name" Kind="OutputPin" />
+            <Pin Id="Si8RfQfH0a4LQo3Nw4cnaP" Name="Uid" Kind="OutputPin" />
+            <Pin Id="OYkbRLwGvSCNBl0U43d3Zl" Name="Camera Type" Kind="OutputPin" />
+          </Node>
+          <Pad Id="GkUSQSUroEHNWN0QKxmAOp" Comment="Camera Type" Bounds="464,320,81,15" ShowValueBox="true" isIOBox="true" />
         </Canvas>
         <Patch Id="NYeaixAwQhvNPZMmILslJn" Name="Create" />
         <Patch Id="PD1yruyTBsSOKzljH4ABjp" Name="Update" />
@@ -342,6 +436,18 @@
         <Link Id="E1jML3IjbOrLGVSZk5rhCD" Ids="GQFWNBn4AzWMIBv1xN9qfJ,AD05SdRPpnyPmQaNFlqYUJ" />
         <Link Id="NrrLu8lh58NLAuWKZ0IPB7" Ids="Nz41v3qhZ9kLQFgzbLnEgU,GUkQEQXxggnMCZKyDdQHSd" />
         <Link Id="KZimwsI0JoTP7w4qqC0gcS" Ids="H1AneevIzrhN620uZue6xN,SfYmeTr4CdmOP6kYEJqfs7" />
+        <Link Id="KOcW8geoaNYLZmZM65gMin" Ids="VQOCCrsFW2lN0AuxAN3HCx,VQG9XGpBjbtPbfSwA893Kd" />
+        <Link Id="ExLOh7bKMstOnU00ZAP9W7" Ids="ALXkqXMXN7bLNRLDuHXrnn,Nquh8g21dCeQNMeOVcJwdy" />
+        <Link Id="TOI6fh27dPGNMm74mPyw6a" Ids="POjR2wSlHuTPYBDTCkegFp,EvuaDnOSOYMMFYvF90L8HZ" />
+        <Link Id="Lw8naqeA9f0OR1GH0Z1fzH" Ids="HUNYrpfWImaNDX3h0meEQX,JR13yjzQTfxNb7xG2FR1rM" />
+        <Link Id="RW6KuuHLoX3QDvdlA0sE1b" Ids="PhL9ssIGxqNQFdVRvtlH8w,IfxVWeyGaj3O0nwX7vI4K1" />
+        <Link Id="GQjGY7p1nt8Ptk5gQsJNCB" Ids="DeGoiQWTkWbPBV1GCjFtgk,NvpeEU8Rct7NzfCaxuywCD" />
+        <Link Id="R3zKh9mQKO1LTSkYVH1iDG" Ids="HN9Mh35fIdpPZEAWt4fgXI,EKDwcRLFVrmLZXXr9qratH" />
+        <Link Id="NhzO7Y4PR60LppfZaJRVVv" Ids="OaA0075AlzkLwfYuFaY4QU,BwO5DgQaDcKQYkqSgIZjC3" />
+        <Link Id="K9mbODL3oAVPEX1z7I3DkT" Ids="II53Uu5Fw7VMIehCV0K1pQ,DxUW4iyAu0fNnle9eQzcM4" />
+        <Link Id="KcxEfd1FbnbLRcwHvVZvCS" Ids="DeGoiQWTkWbPBV1GCjFtgk,LFqgkkl5mbiLWW3EqHDjxV" />
+        <Link Id="Q7x5pc0Njr2LhwbVHhFCe7" Ids="OYkbRLwGvSCNBl0U43d3Zl,GkUSQSUroEHNWN0QKxmAOp" />
+        <Link Id="B7zBL0lzqZdLQkQrzUuTrU" Ids="NhGfmFJJR3LOSvjdxwd6w8,RFjl0V1tqHqLyEEFVDhb2L" />
       </Patch>
     </Node>
   </Patch>
