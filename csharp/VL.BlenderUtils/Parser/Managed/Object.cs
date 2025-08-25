@@ -1,13 +1,9 @@
 ﻿using Stride.Core.Mathematics;
 using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+
 using VL.BlenderUtils.Parser.Native;
+using VL.Lib.IO;
+using VL.Lib.Mathematics;
 
 namespace VL.BlenderUtils.Parser.Managed
 {
@@ -30,21 +26,21 @@ namespace VL.BlenderUtils.Parser.Managed
         /// <summary>
         /// Object's Location
         /// </summary>
-        Stride.Core.Mathematics.Vector3 Location;
+        Stride.Core.Mathematics.Vector3 Location = new();
         /// <summary>
         /// Object's Rotation
         /// Roations originally are in Radians
         /// </summary>
-        Stride.Core.Mathematics.Vector3 Rotation;
+        Stride.Core.Mathematics.Vector3 Rotation = new();
         /// <summary>
         /// Objsect's Size
         /// </summary>
-        Stride.Core.Mathematics.Vector3 Size;
+        Stride.Core.Mathematics.Vector3 Size = new();
         //Deltas
         /// <summary>
         /// Location Delta
         /// </summary>
-        Stride.Core.Mathematics.Vector3 LocationDelta;
+        Stride.Core.Mathematics.Vector3 LocationDelta = new();
         /// <summary>
         /// Rotation Delta
         /// </summary>
@@ -54,7 +50,10 @@ namespace VL.BlenderUtils.Parser.Managed
         /// </summary>
         Stride.Core.Mathematics.Vector3 ScaleDelta;
 
-        Stride.Core.Mathematics.Quaternion Quaternion;
+        Stride.Core.Mathematics.Quaternion Quaternion = new();
+
+        Matrix WorldMatrix = new Matrix();
+        Matrix LocalMatrix = new Matrix();
 
         bool isEmpty;
 
@@ -82,10 +81,19 @@ namespace VL.BlenderUtils.Parser.Managed
             
             var loc = (float[])dobj.GetValue("loc");
             obj.Location = new Stride.Core.Mathematics.Vector3((float)loc[0], (float)loc[1], (float)loc[2]);
+            
             var rot = (float[])dobj.GetValue("rot");
             obj.Rotation = new Stride.Core.Mathematics.Vector3((float)rot[0], (float)rot[1], (float)rot[2]);
             var sca = (float[])dobj.GetValue("size");
             obj.Size = new Stride.Core.Mathematics.Vector3((float)sca[0], (float)sca[1], (float)sca[2]);
+            var quat = (float[])dobj.GetValue("quat");
+            Console.WriteLine($"Quat: {quat[0]} {quat[1]} {quat[2]} {quat[3]}");
+            obj.Quaternion = new Stride.Core.Mathematics.Quaternion((float)quat[0], (float)quat[1], (float)quat[2], (float)quat[3]);
+
+            foreach(var q in quat)
+            {
+                Console.WriteLine(q.ToString());
+            }
 
             return obj;
         }
@@ -107,12 +115,30 @@ namespace VL.BlenderUtils.Parser.Managed
         /// <returns></returns>
         public Matrix GetTransformations()
         {
-            var matrix = new Stride.Core.Mathematics.Matrix();
-            Matrix.Scaling(Size.X, Size.Z, Size.Y,out matrix);
-            Matrix.RotationYawPitchRoll(Rotation.Z, Rotation.X, Rotation.Y, out matrix);
-            Matrix.Translation(Location.X, Location.Z, Location.Y,out  matrix);
+            
+            
+            var sTranslation = new Stride.Core.Mathematics.Vector3(Location.X, -Location.Z, Location.Y);
+            var sScale = new Stride.Core.Mathematics.Vector3(Size.X, Size.Z, Size.Y);
+            var initMatrix = Matrix.Identity;
 
-            return matrix;
+            //Matrix.RotationYawPitchRoll(Rotation.Z, Rotation.X, Rotation.Y, out matrix);
+            
+            var rotMatrix = Matrix.RotationYawPitchRoll(Rotation.Z+ (float)(-Math.PI / 2), Rotation.X, Rotation.Y);
+            var sclMatrix = Matrix.Scaling(sScale);
+            var trsMatrix = Matrix.Translation(sTranslation);
+            
+            
+            initMatrix = Matrix.Multiply(initMatrix, sclMatrix);
+            initMatrix = Matrix.Multiply(initMatrix, rotMatrix); 
+            initMatrix = Matrix.Multiply(initMatrix, trsMatrix);
+
+            var rotMatrixToBlender = Matrix.RotationYawPitchRoll((float)(-Math.PI / 2), 0, 0);
+            initMatrix = Matrix.Multiply(initMatrix, rotMatrixToBlender);
+
+            return initMatrix;
+
+
+
         }
         /// <summary>
         /// Split Object
