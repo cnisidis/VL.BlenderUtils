@@ -2139,7 +2139,7 @@
                 <Patch Id="AUrhmo1pj4nQPxQI03g65V" ManuallySortedPins="true">
                   <Patch Id="O8wNbvDLHtTNwJ26EeG3Ei" Name="Create" ManuallySortedPins="true" />
                   <Patch Id="PXGXXFH18UXOA4CfZDWqNd" Name="Then" ManuallySortedPins="true" />
-                  <Node Bounds="574,350,81,26" Id="Gr1VJvMLbvzNPjHFodVqxq">
+                  <Node Bounds="574,350,111,26" Id="Gr1VJvMLbvzNPjHFodVqxq">
                     <p:NodeReference LastCategoryFullName="VL.BlenderUtils.Test.BlendFileReader" LastDependency="VL.BlenderUtils.vl">
                       <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                       <Choice Kind="OperationCallFlag" Name="OpenBlendFile" />
@@ -2147,9 +2147,10 @@
                     <Pin Id="BfEXWp6ENLJPYPJxcGHJLe" Name="Input" Kind="StateInputPin" />
                     <Pin Id="GrvunrBRetDPN4wFjWiqkL" Name="Blend File" Kind="InputPin" />
                     <Pin Id="UDOIwYkSJvWNWfmljbAGjj" Name="Output" Kind="StateOutputPin" />
+                    <Pin Id="Bbu4RxdfOptPEsy4nLF7Rt" Name="Blender Fileoptions" Kind="InputPin" />
                     <Pin Id="KHnNXBeOXFqMRE3LMoKL4b" Name="Apply" Kind="InputPin" DefaultValue="False" />
                   </Node>
-                  <Node Bounds="612,270,55,19" Id="DHOiNM5ssCtP8LVjCa4H4l">
+                  <Node Bounds="609,280,55,19" Id="DHOiNM5ssCtP8LVjCa4H4l">
                     <p:NodeReference LastCategoryFullName="System.Conversion" LastDependency="VL.CoreLib.vl">
                       <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                       <Choice Kind="OperationCallFlag" Name="ToString" />
@@ -2215,7 +2216,6 @@
                   </Node>
                 </Patch>
                 <ControlPoint Id="DDs8dxgCMhMM4XgwWbcGLk" Bounds="576,420" Alignment="Bottom" />
-                <ControlPoint Id="Skws1ARiH1YPNemDz2JogK" Bounds="614,133" Alignment="Top" />
               </Node>
               <!--
 
@@ -2476,10 +2476,12 @@
                   <ProcessDefinition Id="D03BkR3YVL9PlE4crLzOls" IsHidden="true" />
                 </Patch>
               </Node>
+              <ControlPoint Id="K9BCLMlCdNzLb8v4sciFCp" Bounds="647,50" />
             </Canvas>
             <Patch Id="FDYhNLQd6ckPd7SxnVCTrD" Name="Create" />
             <Patch Id="KICMqFxxWWvMMQdRYrTHGU" Name="Update">
               <Pin Id="MrYogQj1kAvOmz3AmAw9HA" Name="Blend File" Kind="InputPin" />
+              <Pin Id="RkgbZ5ZChCqL4zvrLk5sb4" Name="Blender Fileoptions" Kind="InputPin" />
               <Pin Id="UlEzD0GSW7SLhepPQUAt8s" Name="Read" Kind="InputPin" />
               <Pin Id="GVvvh4ziNqMOMbgyg6osmu" Name="Blend File" Kind="OutputPin" />
               <Pin Id="R2Td3HOrLRXOmpo8eWURnk" Name="Magic" Kind="OutputPin" />
@@ -2530,10 +2532,11 @@
             <Link Id="P1tpMM8pMKtMQ0zGnPT0eJ" Ids="QbpTKjCALJpL1pmnghKF8o,BD5GyAF4BAuPYbnO0lwOFh" />
             <Link Id="Kw9SKYZdl8HOcAHiNuCXCO" Ids="RyCi3GgVbShQb1e48RrHNz,FIy0A0nbVHnOySsJ2Ld4fM" />
             <Link Id="RscmltWXW4XOWJuXjmKaoy" Ids="SSyAsBjYRCzPn7PE3syg1w,GG9sS1aLXLZQRHIVIR79ve" />
-            <Link Id="LFsTor7CMmePIf1HMvasOc" Ids="LzMln19X64SN18UE4mvgLB,Skws1ARiH1YPNemDz2JogK" />
-            <Link Id="NLRAoIPFVZfOOYFG7aw0OT" Ids="Skws1ARiH1YPNemDz2JogK,NAjCF63SQuAMMMVldN62BA" />
             <Link Id="FcKglKY4xPaLVKVLLYVugG" Ids="SSyAsBjYRCzPn7PE3syg1w,PFPj8XlaqSlNlxu9R0ZYfe" />
             <Link Id="ILUxRsYKCPmQOJd6P4PTPI" Ids="SXpT94sgUB2Ppge8HccByv,BfEXWp6ENLJPYPJxcGHJLe" />
+            <Link Id="Tlbh0Wp76tJNwF17WeFldR" Ids="RkgbZ5ZChCqL4zvrLk5sb4,K9BCLMlCdNzLb8v4sciFCp" IsHidden="true" />
+            <Link Id="H832u0UTzssN9PIUv3OfeQ" Ids="LzMln19X64SN18UE4mvgLB,NAjCF63SQuAMMMVldN62BA" />
+            <Link Id="K2ZAIN0WXtPOfaBptGZRcf" Ids="K9BCLMlCdNzLb8v4sciFCp,Bbu4RxdfOptPEsy4nLF7Rt" />
           </Patch>
         </Node>
         <Canvas Id="EnHUzyPdpZQL5rc6ilWlCd" Name="Structure" Position="500,340">

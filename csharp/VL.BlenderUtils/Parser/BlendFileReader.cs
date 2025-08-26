@@ -8,6 +8,21 @@ using VL.BlenderUtils.Parser.Logger;
 
 namespace VL.BlenderUtils.Parser
 {
+
+    [Flags]
+    public enum BlenderFileoptions
+    {
+        None =0,
+        Scenes = 1 << 0,
+        Cameras = 1 << 1,
+        Objects = 1 << 2,
+        Meshes = 1 << 3,
+        Materials = 1 << 4,
+
+        All = Scenes|Cameras|Objects|Meshes|Materials,
+
+    }
+
     public class BlendFile : IDisposable
     {
         private Logger.Logger Log;
@@ -21,20 +36,24 @@ namespace VL.BlenderUtils.Parser
         private FileStream _fileStream;
         private BinaryReader _handle;
         private Dictionary<IntPtr, FileBlock> Blocks;
-       
+        BlenderFileoptions FileOptions;
         public BlendFile()
         {
             Objects = new List<Managed.Object>();
             Blocks = new Dictionary<IntPtr, FileBlock>();
             Scenes = new();
             Log = new Logger.Logger();
+            FileOptions = BlenderFileoptions.All;
+
+
         }
 
-        public void OpenBlendFile(string blendFile)
+        public void OpenBlendFile(string blendFile, BlenderFileoptions blenderFileoptions = BlenderFileoptions.All)
         {
+            this.FileOptions = blenderFileoptions;
             Blocks.Clear();
 
-                _fileStream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None);
+            _fileStream = new FileStream(blendFile, FileMode.Open, FileAccess.Read, FileShare.None);
             _handle = new BinaryReader(_fileStream) ;
            
             var magic = Reader.ReadString(_handle, 7);
@@ -112,31 +131,32 @@ namespace VL.BlenderUtils.Parser
             Patcher = new Patcher();
             var _camBlocks = Blocks.Values.ToList().FindAll(x => x.Header.Code == "CA");
             var camIndex = 0;
-
-            foreach (var fBlock in _camBlocks)
-            {
-                Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Camera", camIndex));
-                camIndex++;
-            }
+            if (FileOptions.HasFlag(BlenderFileoptions.Cameras))
+                foreach (var fBlock in _camBlocks)
+                {
+                    Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Camera", camIndex));
+                    camIndex++;
+                }
 
             var _objBlocks = Blocks.Values.ToList().FindAll(x => x.Header.Code == "OB");
             var obIndex = 0;
-
-            foreach (var fBlock in _objBlocks)
-            {
-                Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Object", obIndex));
-                obIndex++;
-            }
+            if (FileOptions.HasFlag(BlenderFileoptions.Objects))
+                foreach (var fBlock in _objBlocks)
+                {
+                    Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Object", obIndex));
+                    obIndex++;
+                }
 
             var _scenesBlocks = Blocks.Values.ToList().FindAll(x=>x.Header.Code == "SC");
             var blockStructInDNA = GetDNACatalog().Structures.Find(x => x.TypeName == "Scene");
             var scIndex = 0;
-
-            foreach (var fBlock in _scenesBlocks)
-            {
-                Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Scene", scIndex));
-                scIndex++;
-            }
+            
+            if(FileOptions.HasFlag(BlenderFileoptions.Scenes))
+                foreach (var fBlock in _scenesBlocks)
+                {
+                    Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Scene", scIndex));
+                    scIndex++;
+                }
 
             if (Patcher.Objects != null && Patcher.Objects.Count > 0)
             {
