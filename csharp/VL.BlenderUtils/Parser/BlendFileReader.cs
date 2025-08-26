@@ -5,6 +5,7 @@ using VL.BlenderUtils.Parser.DNA;
 using VL.BlenderUtils.Parser.Native;
 using VL.Lib.Collections;
 using VL.BlenderUtils.Parser.Logger;
+using System.Text;
 
 namespace VL.BlenderUtils.Parser
 {
@@ -18,8 +19,9 @@ namespace VL.BlenderUtils.Parser
         Objects = 1 << 2,
         Meshes = 1 << 3,
         Materials = 1 << 4,
+        Rendering = 1 << 5,
 
-        All = Scenes|Cameras|Objects|Meshes|Materials,
+        All = Scenes|Cameras|Objects|Meshes|Materials|Rendering,
 
     }
 
@@ -37,6 +39,8 @@ namespace VL.BlenderUtils.Parser
         private BinaryReader _handle;
         private Dictionary<IntPtr, FileBlock> Blocks;
         BlenderFileoptions FileOptions;
+
+        public string SceneToRender { get; set; }
         public BlendFile()
         {
             Objects = new List<Managed.Object>();
@@ -129,6 +133,16 @@ namespace VL.BlenderUtils.Parser
         {
             //Initialize Patcher [Patcher is responsible to collect all valeus according to the BlendFile's DNA ]
             Patcher = new Patcher();
+            if(FileOptions.HasFlag(BlenderFileoptions.Rendering))
+            {
+                var _rendBlock = Blocks.Values.ToList().Find(x => x.Header.Code == "REND");
+                _handle.BaseStream.Position = _rendBlock.Header.FileOffset;
+                var rendBytes = _handle.ReadBytes((int)_rendBlock.Header.Size);
+                this.SceneToRender =Encoding.ASCII.GetString(rendBytes,6, (int)_rendBlock.Header.Size-6).Trim('\0');
+                
+            }
+            
+
             var _camBlocks = Blocks.Values.ToList().FindAll(x => x.Header.Code == "CA");
             var camIndex = 0;
             if (FileOptions.HasFlag(BlenderFileoptions.Cameras))
