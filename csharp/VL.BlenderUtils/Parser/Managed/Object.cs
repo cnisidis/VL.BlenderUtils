@@ -74,6 +74,9 @@ namespace VL.BlenderUtils.Parser.Managed
                 case ObjectType.OB_CAMERA:
                     data = Managed.Camera.FromDummyObject(d);
                     break;
+                case ObjectType.OB_LAMP:
+                    data = Managed.Light.FromDummyObject(d);
+                    break;
             }
             
             obj.ObjectType = t;

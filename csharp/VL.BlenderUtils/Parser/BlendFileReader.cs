@@ -19,9 +19,10 @@ namespace VL.BlenderUtils.Parser
         Objects = 1 << 2,
         Meshes = 1 << 3,
         Materials = 1 << 4,
-        Rendering = 1 << 5,
+        Lights = 1 << 5,
+        Rendering = 1 << 6,
 
-        All = Scenes|Cameras|Objects|Meshes|Materials|Rendering,
+        All = Scenes|Cameras|Objects|Meshes|Materials|Lights|Rendering,
 
     }
 
@@ -141,7 +142,16 @@ namespace VL.BlenderUtils.Parser
                 this.SceneToRender =Encoding.ASCII.GetString(rendBytes,6, (int)_rendBlock.Header.Size-6).Trim('\0');
                 
             }
-            
+
+            var _lightBlocks = Blocks.Values.ToList().FindAll(x => x.Header.Code == "LA");
+            var lightIndex = 0;
+            if (FileOptions.HasFlag(BlenderFileoptions.Lights))
+                foreach (var fBlock in _lightBlocks)
+                {
+                    Patcher.Objects.Add(ResolveStructFromBlock(fBlock, "Lamp", lightIndex));
+                    lightIndex++;
+                }
+
 
             var _camBlocks = Blocks.Values.ToList().FindAll(x => x.Header.Code == "CA");
             var camIndex = 0;
@@ -296,6 +306,18 @@ namespace VL.BlenderUtils.Parser
                                             {
 
                                                 var mesh = ResolveStructFromBlock(meshBlock, "Mesh", 0, depth);
+                                                dummyFieldVal = mesh;
+                                            }
+                                        }
+                                        else if (type == ObjectType.OB_LAMP)
+                                        {
+                                            Log.Add($"{new string('\t', depth)} Look for IntPtr {val}");
+                                            GetDNACatalog().Structures.Find(x => x.TypeName == "Lamp");
+                                            Blocks.TryGetValue((IntPtr)val, out var meshBlock);
+                                            if (meshBlock != null)
+                                            {
+
+                                                var mesh = ResolveStructFromBlock(meshBlock, "Lamp", 0, depth);
                                                 dummyFieldVal = mesh;
                                             }
                                         }
@@ -479,6 +501,11 @@ namespace VL.BlenderUtils.Parser
         public Spread<Managed.Camera> GetCameras()
         {
             return Objects.OfType<Managed.Camera>().ToSpread();
+        }
+
+        public Spread<Managed.Light> GetLights()
+        {
+            return Objects.OfType<Managed.Light>().ToSpread();
         }
 
         public void Dispose()

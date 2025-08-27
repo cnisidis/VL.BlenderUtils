@@ -12,6 +12,16 @@ namespace VL.BlenderUtils.Parser.Managed
         private string Type;
         public string Name;
         public int Id;
+
+        public int VertexNumber;
+        public int EdgesNumber;
+        public int FacesNumber;
+        public int CornersNumber;
+
+        CustomData VertexData;
+        CustomData EdgeData;
+        CustomData FaceData;
+        CustomData CornerData;
         public static Managed.Mesh FromDummyObject(Patcher.DNADummyObject dobj)
         {
             var obj = new Managed.Mesh();
@@ -24,4 +34,7 @@ namespace VL.BlenderUtils.Parser.Managed
             return obj;
         }
     }
+
+    
+
 }
